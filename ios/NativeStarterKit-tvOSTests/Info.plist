@@ -20,5 +20,13 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photos</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Location Always</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location</string>
 </dict>
 </plist>

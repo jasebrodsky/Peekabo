@@ -9,6 +9,7 @@ import ProgressBar from "./components/loaders/ProgressBar";
 
 import theme from "./themes/base-theme";
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -12,7 +12,8 @@ const initialState = {
     "NativeBase Easy Grid",
     "NativeBase",
     "CodePush",
-    "Redux"
+    "Redux",
+    "Messages"
   ],
   selectedIndex: undefined
 };
