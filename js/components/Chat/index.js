@@ -303,20 +303,20 @@ class Chat extends Component {
                     },
                     buttonIndex => {
 
+                      //create ref to set new match object with match_id associated with conversation_id generated above. 
+                      let matchesRef1 = firebase.database().ref('matches/'+userId+'/'+this.state.userIdMatch+'/');
+
+                      //create ref to set new match object with match_id associated with conversation_id generated above. 
+                      let matchesRef2 = firebase.database().ref('matches/'+this.state.userIdMatch+'/'+userId+'/');
+
+                      //save fb ref for quering conversation data
+                      let convoRef = firebase.database().ref('/conversations/'+conversationId+'/');
+
+                      //prepare for navigation  
+                      const { navigate } = this.props.navigation;
+
                       if ((buttonIndex) == 0){
                          
-                        //prepare for navigation  
-                        const { navigate } = this.props.navigation;
-
-                        //create ref to set new match object with match_id associated with conversation_id generated above. 
-                        let matchesRef1 = firebase.database().ref('matches/'+userId+'/'+this.state.userIdMatch+'/');
-
-                        //create ref to set new match object with match_id associated with conversation_id generated above. 
-                        let matchesRef2 = firebase.database().ref('matches/'+this.state.userIdMatch+'/'+userId+'/');
-
-                        //save fb ref for quering conversation data
-                        let convoRef = firebase.database().ref('/conversations/'+conversationId+'/');
-
                         //add removed property to match
                         matchesRef1.update({removed: true});
 
@@ -329,6 +329,13 @@ class Chat extends Component {
                         //navigate to messages. 
                         navigate("Messages");
             
+                      }else if ((buttonIndex) == 1){
+                        //report user
+                        alert('We will investigate this person. You can remove them from your matches by clicking the unmatch button.')
+                        
+                        //add removed property to conversation as well. 
+                        convoRef.update({reported: userId});                     
+
                       }
                     }
                   )}
