@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Image, Modal, StyleSheet, ScrollView, FlatList, Slider, TouchableOpacity } from 'react-native';
+import { Image, Alert, Modal, StyleSheet, ScrollView, FlatList, Slider, TouchableOpacity } from 'react-native';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
@@ -28,6 +28,7 @@ import {
   Radio,
   Left,
   Thumbnail,
+  Toast,
   Right,
   Body,
   View
@@ -38,11 +39,6 @@ import { openDrawer } from "../../actions/drawer";
 
 var CITY_OPTIONS = [
   'New York City',  
-  'Rio De Janeiro',
-  'San Francisco - Coming Soon',
-  'Chicago - Coming Soon',
-  'Seattle - Coming Soon',
-  'Boston - Coming Soon',
   'Cancel',
 ];
 
@@ -54,15 +50,15 @@ var PHOTO_OPTIONS = [
 ];
 
 var GENDER_OPTIONS = [
-  'Male',
-  'Female',
+  'male',
+  'female',
   'Cancel',
 ];
 
 var GENDER_MATCH_OPTIONS = [
-  'Male',
-  'Female',
-  'Both',
+  'male',
+  'female',
+  'both',
   'Cancel',
 ];
 var DESTRUCTIVE_INDEX = 2;
@@ -79,6 +75,7 @@ class Settings extends Component {
       imageViewerVisible: false,
       selectedImage:[{url: ''}],
       profile: {
+        showToast: false,
         images: [],
         first_name: null,
         last_name: null,
@@ -95,6 +92,7 @@ class Settings extends Component {
         notifications_match: true,
         error: null,
         work: '',
+        status: 'active'
       }
     }
 
@@ -147,6 +145,32 @@ class Settings extends Component {
   }
 
 
+  validateSettings = () => {
+
+    const { state, navigate } = this.props.navigation;
+
+    //check that all required fields are present
+
+    let genderValidated = this.state.profile.gender !== 'Select';
+    let interestedValidated = this.state.profile.interested !== 'Select';
+    let birthdayValidated = this.state.profile.birthday !== 'Select';
+
+    //alert(genderValidated);
+
+    //if one of gender,interested, birthday is false, ask to update. Else, go to swipes. 
+    if ((genderValidated && interestedValidated && birthdayValidated) == false ){
+
+              Toast.show({
+                text: "Please update your: gender, birthday, or the gender you would like to meet.",
+                buttonText: "OK",
+                duration: 3000
+              })
+      }else{
+        navigate("Swipes");
+      }
+    }
+
+
   //function to sign out user
   signOutUser = async () => {
       const { state, navigate } = this.props.navigation;
@@ -159,22 +183,48 @@ class Settings extends Component {
       }
   }
 
-  //function to delete user
+  //functoin to pause user in db
+  pauseUser = () => firebaseRef.update({status: 'paused'});
+
+  //functoin to resume user in db
+  resumeUser = () => firebaseRef.update({status: 'active'});
+
+  //function to guide user through the delete flow
   deleteUser = async () => {
       const { navigate } = this.props.navigation;
 
       var user = firebase.auth().currentUser;
 
-      user.delete().then(function() {
-        // User deleted.
-        navigate("Login");
+      //alert user for confirmation. On ok delete user's authentication
 
-        }).catch(function(error) {
-        // An error happened.
-        console.log(error);
-      });
+      Alert.alert(
+        'Are you sure you want to delete your account?',
+        'If you delete your account, you will loose touch with everyone within Peekabo. If you would like to take a break, tap the pause button below',
+        [
+          {text: 'Delete Account', onPress: () => userDelete(), style: 'destructive'},
+          {text: 'Pause', onPress: () => this.pauseUser()},
+          {text: 'Cancel', onPress: () => console.log('Canceled')},
+        ],
+        { cancelable: false }
+      )
+
+      //function to delete user
+      var userDelete = () => 
+
+        //set user to deleted status in db, then delete authentication, then go to login page. 
+        firebaseRef.update({status: 'deleted'}).then(function() {
+          user.delete().then(function() {
+          // User deleted.
+          navigate("Login");
+
+          }).catch(function(error) {
+          // An error happened.
+          console.log(error);
+        });
+      }) 
+
+
   }
-
 
 
 
@@ -249,14 +299,14 @@ class Settings extends Component {
               // Increaes image_item_count_start by one, after image uplode task complete per individual image asset. 
               //image_item_count_start++;
 
-              //call updateNameOrImages function with new URI's to pass in multi-path update
-              // Can we put this under after all images from phone have been processed to reduce calls to updateNameOrImage fuction? 
-             this.updateNameOrImage('images', userId, imagesObj );
+              //call updateData function with new URI's to pass in multi-path update
+              // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
+             this.updateData('images', userId, imagesObj );
             
             })
             .catch(console.error);
         }
-        //this.updateNameOrImage('images', userId, imagesObj );
+        //this.updateData('images', userId, imagesObj );
 
       } 
     ).catch(e => console.log(e));
@@ -310,11 +360,11 @@ class Settings extends Component {
                             console.log('profile images after shift: '+JSON.stringify(profile_images));
 
                             //new_profile_images = [main_image, ...profile_images];
-                            //MAYBE REMOVE NULLS FROM ...PROFILE_IMAGES, MAYBE THATS BREAKING UPDATENAMEORIMAGE FUNCTION?
+                            //MAYBE REMOVE NULLS FROM ...PROFILE_IMAGES, MAYBE THATS BREAKING updateData FUNCTION?
                             //console.log('new_profile_images is: '+JSON.stringify(new_profile_images));
                             
                             //multi-path update with new profile images
-                            this.updateNameOrImage('images', userId, profile_images );
+                            this.updateData('images', userId, profile_images );
 
                             }
 
@@ -356,7 +406,7 @@ class Settings extends Component {
                               delete profile_images[key];
 
                               //multi-path update with new array of images
-                              this.updateNameOrImage('images', userId, profile_images );
+                              this.updateData('images', userId, profile_images );
 
                             }
                           }
@@ -378,7 +428,7 @@ class Settings extends Component {
   }
 
   //function to update name or images
-  updateNameOrImage = (type, userid, payload) => {
+  updateData = (type, userid, payload) => {
           
     //create ref to list of coversations for userid
     const userConversations = firebase.database().ref('users/'+userid+'/conversations/');
@@ -425,6 +475,9 @@ class Settings extends Component {
             case 'name':
               updateObj[`matches/${key}/${userid}/name`] = payload;
               break;
+            case 'about':
+              updateObj[`matches/${key}/${userid}/about`] = payload;
+              break;
           }
         });
       }).then(function() {
@@ -437,6 +490,9 @@ class Settings extends Component {
           case 'name':
             updateObj[`users/${userid}/first_name`] = payload;
             break;
+          case 'about':
+            updateObj[`users/${userid}/about`] = payload;
+            break;
         }
       }).then(function(){
           //console.log('updateObj outside .then function: '+JSON.stringify(updateObj));
@@ -447,8 +503,65 @@ class Settings extends Component {
   }
 
 
+  //function to generate gender_pref based on users preferences
+  updateGenderPref = () => {
+    let gender = this.state.profile.gender;
+    let interested = this.state.profile.interested;
+    let min_age = this.state.profile.min_age;
+    let max_age = this.state.profile.max_age;
+
+    // console.log('min age is: '+min_age);
+    // console.log('max age is: '+max_age);
+
+    let gender_pref = '';
+
+    // location, age
+    // gender pref should be: nyc_male_gay_age
+    // so that i can query: all new yorkers, who are men that are gay between the ages of x,y
+
+
+    //if interested in same gender, then gay
+    if (interested == gender){
+      gender_pref = gender+'_gay';
+    }
+
+    //else if interested in both genders, then bi
+    else if (interested == 'both'){
+      gender_pref = gender+'_bi';
+    }
+
+    //else then straight
+    else{
+      gender_pref = gender+'_straight';
+    }
+
+    //return gender_pref string
+    //console.log('gender_pref is: '+gender_pref);
+
+    return gender_pref;
+  }
+
+
   render() {
+
+    //this.validateSettings;
+
     const { navigate } = this.props.navigation;
+    let status; 
+
+    if (this.state.profile.status == 'paused') {
+      status = <Button transparent danger onPress = {() => this.resumeUser()}>
+                  <Text>Resume Account</Text>
+                </Button> ;
+
+    } else if (this.state.profile.status == 'active') {
+      status = <Button transparent danger onPress = {() => this.pauseUser()}>
+                  <Text>Pause Account</Text>
+                </Button>;
+    }
+
+
+        
     return (
       <Container>
         <Modal visible={this.state.imageViewerVisible} transparent={true}>
@@ -465,7 +578,7 @@ class Settings extends Component {
               <Icon  name="ios-settings-outline" />
           </Body>
           <Right >
-            <Button transparent onPress={() => navigate("Swipes")}>
+            <Button transparent onPress={() => this.validateSettings()}>
               <Icon name="ios-flame-outline" />
             </Button>
           </Right>
@@ -509,6 +622,7 @@ class Settings extends Component {
             <Form>
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>
                 <Text>I am ...</Text>
+
               </ListItem> 
               <Item fixedLabel>
                 <Label>Name</Label>
@@ -519,7 +633,7 @@ class Settings extends Component {
                               })}                  
                   //onEndEditing={(e: any) => firebaseRef.update({first_name: e.nativeEvent.text})}
                 
-                  onEndEditing={(e: any) => this.updateNameOrImage('name', userId, e.nativeEvent.text)}
+                  onEndEditing={(e: any) => this.updateData('name', userId, e.nativeEvent.text)}
 
                 />
               </Item>
@@ -529,12 +643,12 @@ class Settings extends Component {
                       (
                         {
                           options: CITY_OPTIONS,
-                          cancelButtonIndex: 6,
-                          destructiveButtonIndex: 6,
+                          cancelButtonIndex: 1,
+                          destructiveButtonIndex: 1,
                           title: 'City'
                         },
                         (buttonIndex) => {
-                          if ((buttonIndex) === 6) {
+                          if ((buttonIndex) === 1) {
                                console.log(CITY_OPTIONS[buttonIndex])
                             } 
                             else {
@@ -567,7 +681,7 @@ class Settings extends Component {
                             } else {
                               this.setState({
                                 profile: { ...this.state.profile, gender: GENDER_OPTIONS[buttonIndex]}
-                              }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex]});
+                              }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref() });
                             }
                         }
                       )
@@ -625,7 +739,10 @@ class Settings extends Component {
                   onChangeText={(about) => this.setState({
                                 profile: { ...this.state.profile, about: about}
                               })}                  
-                  onEndEditing={(e: any) => firebaseRef.update({about: e.nativeEvent.text})}
+                  onEndEditing={(e: any) => this.updateData('about', userId, e.nativeEvent.text)}
+               
+
+
                 />
               </Item>
               <Item fixedLabel>
@@ -661,7 +778,7 @@ class Settings extends Component {
                             } else {
                               this.setState({
                                 profile: { ...this.state.profile, interested: GENDER_MATCH_OPTIONS[buttonIndex]}
-                              }), firebaseRef.update({interested: GENDER_MATCH_OPTIONS[buttonIndex]})
+                              }), firebaseRef.update({interested: GENDER_MATCH_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref()})
                             }
                         }
                       )
@@ -747,7 +864,7 @@ class Settings extends Component {
                 <Input disabled />
               </Item>
               <ListItem style={{flexDirection: "row", justifyContent: "flex-start"}} itemDivider>
-                <Text>Never do this...</Text>
+                <Text>Other stuff...</Text>
               </ListItem>
               <View style={{flexDirection: "row", justifyContent: "center"}}>
                 <Button transparent danger onPress = {() => this.signOutUser()}  >
@@ -758,6 +875,9 @@ class Settings extends Component {
                 <Button transparent danger onPress = {() => this.deleteUser()}>
                   <Text>Delete Account </Text>
                 </Button>
+              </View>
+              <View style={{flexDirection: "row", justifyContent: "center"}}>
+                {status}
               </View>
             </Form>
           </View>

@@ -66,16 +66,40 @@ class Login extends Component {
 
 
   componentDidMount() {
+
+    LoginManager.logOut();
+
     const { navigate } = this.props.navigation;
 
     //check if user is logged in when component mounts. If logged in navigate to Swipes
-    firebase.auth().onAuthStateChanged(function(user) {
+    //set flag to redirect only once
+    var authFlag = true;
+    firebase.auth().onAuthStateChanged( user => {
+      //if flag is true, then check if user is signed in, then redirect and turn flag to false, so it doesnt' redirect again. 
       
-      //if user exists then navigate to swipes
-      if (user) {
-        navigate("Swipes");
-      }
+      //lastLogin = user.lastLoginAt;
+
+      // if(authFlag) {
+      //   //check if user is signed in
+      //   if (user) {
+
+      //     //WHY DOES PROPERTIES AFTER apiKey ARRAY RETURN UNDEFINED???
+      //     console.log('last login is: '+JSON.stringify(user.lastLogin));
+      //     console.log('created at is: '+JSON.stringify(user.createdAt));
+
+      //     //if new user, bc they logged in same time as created on time, then redirect to settings. Else redirect to Swipes. 
+      //     if (user.lastLoginAt == user.createdAt){
+      //       navigate("Settings"); 
+      //     }else{
+      //       navigate("Swipes"); 
+      //     }
+
+      //     // set flag to false so new redirect won't happen. 
+      //     authFlag = false;
+      //   }
+      // }
     });
+
 
   }
 
@@ -129,18 +153,16 @@ onLoginOrRegister = () => {
 
     })
     .then((user) => {
-      //navigate("Swipes");
-      var userId = firebase.auth().currentUser.uid;
-      firebase.database().ref('/users/' + userId).once('value').then(function(snapshot) {
-      var existing_user = snapshot.exists();
+      let userId = user.uid;
+      firebase.database().ref('/users/' + userId).once('value').then((snapshot) => {
+      let existing_user = snapshot.exists();
         
-        //check if user exists and that user is active
-
         if (existing_user){
           //user already exists
           console.log('user already exists!');
 
           firebaseRefCurrentUser = firebase.database().ref('/users/' + userId);
+          firebaseRefCurrentUser.update({last_login: Date.now()});
 
             //Let's run this code once immeditately after login (login index.js), so that location will only on login instead of every time user. Switch to getCurrentPosition 
             this.watchId = navigator.geolocation.watchPosition(
@@ -154,7 +176,7 @@ onLoginOrRegister = () => {
                       var state_address_component = json.results[0].address_components[5];
                       var city_state = city_address_component.long_name+', '+state_address_component.short_name;
                       console.log(firebaseRefCurrentUser);
-                    firebaseRefCurrentUser.update({city_state: city_state, latitude: position.coords.latitude, longitude: position.coords.longitude}), navigator.geolocation.clearWatch(this.watchId);
+                    firebaseRefCurrentUser.update({last_login: Date.now(), city_state: city_state, latitude: position.coords.latitude, longitude: position.coords.longitude}), navigator.geolocation.clearWatch(this.watchId);
                     },
                     error => {
                       alert(error);
@@ -163,60 +185,67 @@ onLoginOrRegister = () => {
               },
               { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter: 300000 },
             );
+            //will trigger the onAuthStateChanged listener and redirect to swipes
             navigate("Swipes");
 
-
         }else{
-        //user does not exist yet
-        alert('user does not exist yet, make profile');
-
+        
+          //user does not exist yet
          AccessToken.getCurrentAccessToken().then(
             (data) => {
               let accessToken = data.accessToken
-              //alert(accessToken.toString())
 
               const responseInfoCallback = (error, result) => {
                 if (error) {
                   console.log(error)
                   alert('Error fetching data: ' + error.toString());
                 } else {
-                  console.log(result)
+                  
                   fb_result = result;
-
-                  var database = firebase.database();
+                  let gender = (fb_result.gender == null) ? 'Select' : fb_result.gender;
+                  let birthday = (fb_result.birthday == null) ? 'Select' : fb_result.birthday;             
+                  let database = firebase.database();
                   largePhotoURL = "https://graph.facebook.com/"+fb_result.id+"/picture?width=600&height=800";
 
-                  //creat new function to convert age range based off users's age (bday)
 
                   database.ref('users/' + user.uid).set({
-                    status: 'active',
+                    userid: userId,
                     first_name: fb_result.first_name,
                     fb_id: fb_result.id,
                     last_name: fb_result.last_name,
                     email: fb_result.email,
                     images: [{url: largePhotoURL}],
-                    latitude: null,
-                    longitude: null,
+                    last_login: Date.now(),
+                    swipe_count: 0,
+                    last_swipe_sesh_date: Date.now(),
+                    latitude: '',
+                    longitude: '',
                     city_state: fb_result.location.name,
-                    gender: fb_result.gender,
-                    gender_pref: 'male_straight',
+                    gender: gender,
+                    gender_pref: gender+'straight',
                     birthday: fb_result.birthday,
                     about: 'Looking to meet my soul mate and stuff. Are you the one?',
                     work: 'Director of awesomenss @ awsomess LLC',
                     education: 'Northeastern University',
-                    interested: (fb_result.gender == 'male') ? "female" : "male",
+                    status: 'active',
+                    interested: (fb_result.gender == 'male') ? 'female' : (fb_result.gender == 'female') ? 'male' : 'Select',
                     min_age: 35,
                     max_age: 23,
                     error: null,
+                    last_conversation_count: 0,
                     notifications_message: true,
                     notifications_match: true,
                     error: null,
-
                     //religion: fb_result.religion,
                     //political: fb_result.political,
+                  }, function(error) {
+                    if (error) {
+                      console.log("Data could not be saved." + error);
+                    } else {
+                      console.log("Data saved successfully.");
+                      navigate("Settings");
+                    }
                   });
-                  navigate("Settings");
-
                 }
               }
 
@@ -239,30 +268,18 @@ onLoginOrRegister = () => {
             }
           )
 
-
-
-
         }
 
       });
- 
-      // If you need to do anything with the user, do it here
-      // The user will be logged in automatically by the
-      // `onAuthStateChanged` listener we set up in App.js earlier
-
-
-      // Get a reference to the database service
-
-
     })
     .catch((error) => {
       const { code, message } = error;
+      console.log('error is: '+error);
       // For details of error codes, see the docs
       // The message contains the default Firebase string
       // representation of the error
     });
 }
-
 
 
   render() {
@@ -298,7 +315,6 @@ onLoginOrRegister = () => {
                 <Button
                   style={styles.btn}
                   onPress = {() => this.onLoginOrRegister() }
-                  //onPress={() => navigate("Swipes")}
                 >
                   <Text>Login with Facebook</Text>
                 </Button>

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Image,TouchableOpacity,Modal,ScrollView,StyleSheet,Text,View,TouchableWithoutFeedback } from 'react-native'
+import { Dimensions, ActivityIndicator, Image,TouchableOpacity,Modal,ScrollView,StyleSheet,Text,View,TouchableWithoutFeedback } from 'react-native'
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -8,21 +8,24 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 import Overlay from 'react-native-modal-overlay';
 import ProgressCircle from 'react-native-progress-circle';
 import Swiper from 'react-native-deck-swiper';
+import TimerMixin from 'react-timer-mixin';
 
 import {
+  Badge,
   Card,
   CardItem,
   Container,
   DeckSwiper,
   Header,
   Title,
+  Toast,  
   Content,
   Button,
   Icon,
   Left,
   Thumbnail,
   Right,
-  Body,
+  Body
 } from "native-base";
 
 import { setIndex } from "../../actions/list";
@@ -36,10 +39,18 @@ class Swipes extends Component {
       userId: '',
       user_name: null,
       user_images: '',
+      user_about: '',
+      matchImages: [{url: 'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg'}],
+      matchAbout: 'test about in modal here',
       profiles: [],
       loading: true,
+      unreadChatCount: 0,
+      showChatCount: false,
+      isEmpty: false,
+      allSwiped: false,
       imageViewerVisible: false,
-      matchModalVisible: false,
+      swipesStatsShow: false,
+      swipeCountStart: 0,
       query_start: null,
       query_end: null,
       cardIndex: 0
@@ -47,283 +58,371 @@ class Swipes extends Component {
   }
 
 
-  componentWillMount() {
+  showAlert() {
+    alert("hola senor!");
+  }
 
-  //Retrive information about the logged in user
-  
-  //save userId of logged in user, to use for later db queries. 
-  const userId = firebase.auth().currentUser.uid;
-  this.setState({ userId: userId });
-  //save ref to users obj of db
-  usersRef = firebase.database().ref('users');
+  componentDidMount() {
 
-  //query for logged in users preferences. 
-  firebase.database().ref('/users/' + userId).once('value')
-  .then(function(snapshot) {
+    //save userId of logged in user, to use for later db queries. 
+    const userId = firebase.auth().currentUser.uid;
+    this.setState({ userId: userId });
 
-    //save users' preferences in order to use later for quering users that are relevant matches. 
-    //let gender = snapshot.val().gender;
-    //let interested = snapshot.val().interested;
-    let latitude = snapshot.val().latitude;
-    let longitude = snapshot.val().longitude;
-    let max_age = snapshot.val().max_age;
-    let min_age = snapshot.val().min_age;
-    let gender_pref = snapshot.val().gender_pref;
-    let user_name = snapshot.val().first_name;
-    let user_images = snapshot.val().images;
+    //get unread chat count
+    this.getUnreadChatCount(userId);
+    
+    //getMatches of current user
+    this.getMatches(userId);
 
-    // translate user's gender_pref into who they're interested in. 
-    switch (gender_pref) {
-      case 'female_straight':
-        var query_start = 'male_bi';
-        var query_end = 'male_straight';
-        console.log(query_start + query_end);
-        //above query will include male_gay since it's inbetween male_bi and male_straight
-        break;
-      case 'male_straight':
-        var query_start = 'female_bi';
-        var query_end = 'female_straight';
-        console.log(query_start + query_end);
-        break;
-      case 'male_gay':
-        var query_start = 'male_bi';
-        var query_end = 'male_gay';
-        console.log(query_start + query_end);
-        break;
-      case 'female_gay':
-        var query_start = 'female_bi';
-        var query_end = 'female_gay';
-        console.log(query_start + query_end);
-        break;
-      // case 'male_bi':
-      //   console.log('female_straight' + 'female_bi' +'AND'+ 'male_gay' + 'male_bi');
-      //   let query_start = 'male_bi';
-      //   let query_end = 'male_straight';
-      //   break;
-      // case 'female_bi':
-      //   console.log('male_straight' + 'male_bi' +'AND'+ 'female_gay' + 'female_bi');
-      //   let query_start = 'male_bi';
-      //   let query_end = 'male_straight';
-      //   break;
-      default:
-        console.log('Sorry, we are out of ' + expr + '.');
+    //run newBatch in order to reset swipe count to 0 at the right time. 
+    this.newBatch(userId);
+
+
+ 
+
+
+    //query for logged in users information needed and set state with it.     
+    firebase.database().ref('/users/' + userId).on('value', ((snapshot) => {
+                
+        //set state with user data. 
+        this.setState({ 
+            user_name: snapshot.val().first_name,
+            user_images: snapshot.val().images,
+            user_about: snapshot.val().about,
+            swipeCountStart: snapshot.val().swipe_count         
+            }
+          );
+       })
+      )
     }
 
+    getUnreadChatCount = (userId) => {
 
-    //update state with gender_pref. After state updated, build profile query. 
-    this.setState({ user_name: user_name, user_images: user_images, query_start: query_start, query_end: query_end }, function() {
+        firebase.database().ref('/matches/' + userId).orderByChild('unread_message').equalTo(true).on('value', ((chatSnapshot) => {
 
-        //Retrive list of other relevant users.
-        //create empty profiles array of objects, which will hold relevant profiles 
-        var profilesArray=[];
-        
-        //Update query to include preferences, past swipes,...
-        //var profilesRef = usersRef.orderByChild('gender_pref').startAt(this.state.query_start).endAt(this.state.query_end);
+          // if chat count is not empty, update state with count and set flag to true. Else, make sure to set flag to false. 
+          if(chatSnapshot.val() !== null){
+              
+            //set state with chat count. 
+            this.setState({
+              unreadChatCount: Object.keys(chatSnapshot.toJSON()).length,
+              showChatCount: true
+            }) 
+          }
+        })
+      )
+    }
 
-        //TEST QUERY ALL USERS
-        var profilesRef = usersRef.orderByChild('gender_pref');
+  getMatches(userId) {
+    fetch('https://us-central1-blurred-195721.cloudfunctions.net/getMatches?userid='+userId)
+      .then((response) => response.json())
+      .then((responseJson) => {
+                
+        // for each match userid inside responeJson
+        let promises = responseJson.map((match) => {
+          
+          //save match userid per match into var, needed to select props of that obj.
+          let matchUserId = Object.keys(match);
+          // select matchType of per match
+          let matchType = match[matchUserId].matchType;
 
-        //push each profile into array. TRY Object.entities(snap)
-        profilesRef.once('value').then((snap) => {
-            snap.forEach(function(item ) {
-                //push to new array. 
-                profilesArray.push(item);
+          //call firebase to return profile data per match
+          return firebase.database().ref('/users/' + matchUserId).once('value')
+          .then((profileSnap) => {
+       
+            //save profileSnap to json var in order to add match type prop to it
+            let profileObj = profileSnap.toJSON();
 
-                //update state with appropriate profiles data for deckswiper. 
-            }), this.setState({profiles: profilesArray, loading: false})
+            //add new property match_type to object
+            profileObj["match_type"] = matchType;
+
+            //Return profile obj to promise. 
+            return profileObj;
           })
-        });
-      }.bind(this)
-    )
+        })
+
+        // after all promises resolve, then set profileObj to state. 
+        Promise.all(promises).then((profileObj) => {
+          
+          //if profile objs are empty or undefined show flag empty profiles else put profile into state
+          if (profileObj === undefined || profileObj.length == 0) {
+            //turn empty flag to true
+            this.setState({ 
+              isEmpty: true,
+              allSwiped: true,
+              loading: false
+            });  
+
+            // else put profilObjs into state
+          }else{
+            this.setState({ 
+              profiles: profileObj,
+              loading: false
+            });
+          }
+       
+        })
+    })  
   }
 
-//Close match modal. Eventually redirect directly to chat componenent specific to match's conversation. 
-closeModal(redirect) {
-  const { navigate } = this.props.navigation;
-  this.setState({matchModalVisible:false});
-  if(redirect == true){
-    navigate("Messages");
+
+  //Close match modal. Eventually redirect directly to chat componenent specific to match's conversation. 
+  closeModal(redirect) {
+    const { navigate } = this.props.navigation;
+    this.setState({swipesStatsShow:false});
+    if(redirect == true){
+      navigate("Messages");
+    }
   }
-}
 
-showModal() {
-  this.setState({matchModalVisible:true});
-}
+  showModal() {
+    this.setState({swipesStatsShow:true});
+  }
 
 
-//function to call when a new match is intiated.
-pushNewMatch = (images, name_match, userid, userid_match) => {
-  
-  user_name = this.state.user_name;
-  user_images = this.state.user_images;
+  //function to call when a new match is intiated.
+  pushNewMatch = (images, name_match, userid, userid_match, about_match) => {
+    
+    user_name = this.state.user_name;
+    user_images = this.state.user_images;
+    user_about = this.state.user_about;
 
-  //create ref to conversations obj
-  conversationRef = firebase.database().ref('conversations/');
+    //create ref to conversations obj
+    conversationRef = firebase.database().ref('conversations/');
 
-  //push new conversation obj for new match
-  //make sure that users who already matched, don't show up in match queue. Otherwise duplicate conversations will occur.  
-  var newConversationRef = conversationRef.push({
-      blur: "40", //start blur at this amount
-      messages: null,
-      participants: {
-        [userid_match]: {
-          name: name_match,
-          images: images
+    //push new conversation obj for new match
+    //make sure that users who already matched, don't show up in match queue. Otherwise duplicate conversations will occur.  
+    var newConversationRef = conversationRef.push({
+        blur: "40", //start blur at this amount
+        messages: null,
+        participants: {
+          [userid_match]: {
+            name: name_match,
+            images: images
+          },
+          [userid]: {
+            name: this.state.user_name,
+            images: this.state.user_images
+          }
         },
-        [userid]: {
-          name: this.state.user_name,
-          images: this.state.user_images
-        }
-      },
-      time_left: '86400000', //default timeleft
-      active: 'true',
-      match_date: new Date().getTime()
-    }, function (error) {
-      if (error) {
-        //if push fails
-        alert("Data could not be saved." + error);
-      } else {
-        //if push is successful, set new match object as well. 
-        console.log("Data saved successfully.");
-      
-        // Get the unique key generated by push(), for the match_id value. 
-        let match_id = newConversationRef.key;
+        active: 'true',
+        match_date: new Date().getTime()
+      }, function (error) {
+        if (error) {
+          //if push fails
+          alert("Data could not be saved." + error);
+        } else {
+          //if push is successful, set new match object as well. 
+          console.log("Data saved successfully.");
+        
+          // Get the unique key generated by push(), for the match_id value. 
+          let match_id = newConversationRef.key;
 
-        //create ref to set new match object with match_id associated with conversation_id generated above. 
-        let matchesRef1 = firebase.database().ref('matches/'+userid+'/'+userid_match+'/');
+          //create ref to set new match object with match_id associated with conversation_id generated above. 
+          let matchesRef1 = firebase.database().ref('matches/'+userid+'/'+userid_match+'/');
 
-        //create ref to set new match object with match_id associated with conversation_id generated above. 
-        let matchesRef2 = firebase.database().ref('matches/'+userid_match+'/'+userid+'/');
+          //create ref to set new match object with match_id associated with conversation_id generated above. 
+          let matchesRef2 = firebase.database().ref('matches/'+userid_match+'/'+userid+'/');
 
-        //create ref to set new conversations key/value pair witin users object.
-        let conersationsMatchesRef1 = firebase.database().ref('/users/'+userid+'/').child("conversations");
+          //create ref to set new conversations key/value pair witin users object.
+          let conersationsMatchesRef1 = firebase.database().ref('/users/'+userid+'/').child("conversations");
 
-        //create ref to set new conversations key/value pair witin users object.
-        let conersationsMatchesRef2 = firebase.database().ref('/users/'+userid_match+'/').child("conversations");
+          //create ref to set new conversations key/value pair witin users object.
+          let conersationsMatchesRef2 = firebase.database().ref('/users/'+userid_match+'/').child("conversations");
 
-        //set new match object
-        matchesRef1.set({
-          blur: "40", //start blur at this amount
-          images: images, //pass images in here
-          last_message: "You got a new match!", 
-          name: name_match,
-          percent_left: '90',
-          time_left: 86400000,
-          active: 'true',
-          match_date: new Date().getTime(),
-          match_id: match_id
+          //set new match object
+          matchesRef1.set({
+            blur: "40", //start blur at this amount
+            images: images, //pass images in here
+            last_message: "You got a new match!", 
+            last_message_date: (new Date().getTime()*-1), 
+            name: name_match,
+            active: 'true',
+            match_date: new Date().getTime(),
+            match_id: match_id,
+            match_userid: userid_match,
+            about: about_match,
+            unread_message: false
+          });
+
+          //set new match object
+          matchesRef2.set({
+            blur: "40", //start blur at this amount
+            images: user_images, //pass images in here
+            last_message: "You got a new match!",
+            last_message_date: (new Date().getTime()*-1), 
+            name: user_name,
+            active: 'true',
+            match_date: new Date().getTime(),
+            match_id: match_id,
+            match_userid: userid,
+            about: user_about,
+            unread_message: false
+          });
+        
+          //USE MULTIPLE PATH UPDATING FOR BELOW TWO UPDATES
+
+          //push new conversation to profile object.
+          conersationsMatchesRef1.update({
+            [match_id] : 'true'
         });
 
-        //set new match object
-        matchesRef2.set({
-          blur: "40", //start blur at this amount
-          images: user_images, //pass images in here
-          last_message: "You got a new match!", 
-          name: user_name,
-          percent_left: '90',
-          time_left: 86400000,
-          active: 'true',
-          match_date: new Date().getTime(),
-          match_id: match_id
+          //push new conversation to others' profile object.
+          conersationsMatchesRef2.update({
+            [match_id] : 'true'
         });
-      
-        //USE MULTIPLE PATH UPDATING FOR BELOW TWO UPDATES
-
-        //push new conversation to profile object.
-        conersationsMatchesRef1.update({
-          [match_id] : 'true'
-      });
-
-        //push new conversation to others' profile object.
-        conersationsMatchesRef2.update({
-          [match_id] : 'true'
-      });
 
 
-    }
-  });
-}
+      }
+    });
+  }
 
-//Function to save new swipe object
-pushNewSwipe = (like, userid, userid_match, potential_match, name_match, imagesObj) => {
-  //define ref to users' swipe object
-  swipesRef = firebase.database().ref('swipes/'+userid+'/'+userid_match+'/');
-  //set or replace users swipe with latest swipe
-  swipesRef.set({
-    like: like,
-    swipe_date: new Date().getTime(),
-    //images: imagesObj
-  });
-
-  //if user is potential match, then 
-    // create new match object
-    if (potential_match==true) { 
-       //alert("save new match!");
-       this.pushNewMatch(imagesObj, name_match, userid, userid_match);
-    }
-
-    //queue notification that new match is available in 30 seconds
-
-    //send push notification to other user
-}
+  //Function to save new swipe object
+  pushNewSwipe = (like, userid, userid_match, match_status, name_match, about_match, imagesObj) => {
+    
+    //save potential_match into bool var. 
+    //let potential_match = (match_status == 'potential_match') ? true : false;
+    let potential_match = true;
 
 
-//Function to save new swipe object
-calculateAge (dateString) {// birthday is a date
-    var today = new Date();
-    var birthDate = new Date(dateString);
-    var age = today.getFullYear() - birthDate.getFullYear();
-    var m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return age;
-}
+    //define ref to users' swipe object
+    swipesRef = firebase.database().ref('swipes/'+userid+'/'+userid_match+'/');
 
-  //handle swipe events
-  onSwiped = (cardIndex, direction, potential_match) => {
-    // save variable for direction of swipe
-    let like = (direction == 'right') ? true : false;
-    // save to firebase db swipe event and possible match
-    this.pushNewSwipe(
-          like, //like
-          this.state.userId, //userid
-          this.state.profiles[cardIndex].key, //userid match
-          potential_match, // potential match
-          this.state.profiles[cardIndex].toJSON().first_name, //match name
-          this.state.profiles[cardIndex].toJSON().images //matche images
-        ),this.setState({ cardIndex: cardIndex+1});//update card index in state, so that image modal has correct images 
+    swipesRef2 = firebase.database().ref('swipesReceived/'+userid_match+'/'+userid+'/');
+    //set or replace users swipe with latest swipe
+    swipesRef.set({
+      like: like,
+      swipe_date: new Date().getTime(),
+      //images: imagesObj
+    });
+
+    swipesRef2.set({
+      like: like,
+      swipe_date: new Date().getTime(),
+      //images: imagesObj
+    });
+
+    //if user is potential match, then 
+      // create new match object
+      if (potential_match == true) { 
+         //alert("save new match!");
+         this.pushNewMatch(imagesObj, name_match, userid, userid_match, about_match);
+      }
+
+      //queue notification that new match is available in 30 seconds
+
+      //send push notification to other user
+  }
+
+
+
+
+
+  //Function to save new swipe object
+  calculateAge (dateString) {// birthday is a date
+      var today = new Date();
+      var birthDate = new Date(dateString);
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+      }
+      return age;
+  }
+
+    //handle swipe events
+    onSwiped = (cardIndex, direction) => {
+      // save variable for direction of swipe
+      let like = (direction == 'right') ? true : false;
+
+      // save to firebase db swipe event and possible match
+      this.pushNewSwipe(
+            like, //like
+            this.state.userId, //userid
+            this.state.profiles[cardIndex].userid, //userid match
+            this.state.profiles[cardIndex].match_type, // potential match // this.state.profiles[cardIndex].potential_match
+            this.state.profiles[cardIndex].first_name, //match name
+            this.state.profiles[cardIndex].about, //match about
+            this.state.profiles[cardIndex].images //matche images
+          ),this.setState({ cardIndex: cardIndex+1});//update card index in state, so that image modal has correct images 
   };
+
+  newBatch = (userid) => {
+    
+    //calculate miliseconds until time, then update swipe count to 0. 
+    var now = new Date();
+    var millisTill10 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 46, 0, 0) - now;
+    if (millisTill10 < 0) {
+         millisTill10 += 86400000; // it's after 10am, try 10am tomorrow.
+    }
+
+      setTimeout(function(){
+
+        //save flag that user has now seen their daily match
+        let userRef = firebase.database().ref('users/'+userid+'/');
+
+        //update swipe count in db in order to compute remaining matches. 
+        userRef.update({
+          swipe_count: 0,
+          last_swipe_sesh_date: new Date().getTime()
+        }); 
+
+      alert('testing');
+
+
+      }, millisTill10);
+
+    
+
+  }
+
+  enableNavigation = (view) => {
+    const { navigate } = this.props.navigation;
+
+    //save flag that user has now seen their daily match.
+    let userRef = firebase.database().ref('users/'+this.state.userId+'/');
+
+    //update swipe count in db in order to compute remaining matches. 
+    userRef.update({
+      swipe_count: this.state.swipeCountStart + this.state.cardIndex,
+      last_swipe_sesh_date: new Date().getTime()
+    });
+
+    //navigate to appropriate view;
+    if (view == 'Settings'){
+      navigate("Settings");
+    }else{
+      navigate("Messages");
+    }
+    
+  }
+
+
 
 
   render () {
     const { navigate } = this.props.navigation;
-
-    //bool when profiles have been fetched, so that empty image array doesn't break modal
-    const showModal = this.state.profiles.length>1;
+    const dimensions = Dimensions.get('window');
+    const height = dimensions.height;
+    const width = dimensions.width
+    
+    failImage = 'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg';
     let cardIndex = this.state.cardIndex;
-    let modal;
+ 
+    // //if profile are fetched
+    // if (this.state.isEmpty) {
+    //   isEmpty = 
+    //     <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
+    //       PROFILES ARE EMPTY
+    //     </Text>;
+    // }
 
-    //if profile are fetched
-    if (showModal) {
-      modal = 
-      <Modal visible={this.state.imageViewerVisible} transparent={true}>
-          <ImageViewer
-            imageUrls = {Object.values(this.state.profiles[cardIndex].toJSON().images)}
-            onSwipeDown = {() => this.setState({ imageViewerVisible: false})}
-            onClick = {() => this.setState({ imageViewerVisible: false})}
-          />
-          <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
-            {this.state.profiles[cardIndex].toJSON().about}
-          </Text>
-      </Modal> ;
-    }
 
     return (
       <Container style={{ flex: 1 }} >
           <Header>
             <Left>
-              <Button transparent onPress={() => navigate("Settings")}>
+              <Button transparent onPress={() => this.enableNavigation('Settings') }>
                 <Icon name="ios-settings-outline" />
               </Button>
             </Left>
@@ -331,23 +430,42 @@ calculateAge (dateString) {// birthday is a date
                 <Icon onPress={() => this.showModal()} name="ios-flame-outline" />
             </Body>
             <Right>
-              <Button transparent onPress={() => navigate("Messages")}>
+              <Button transparent onPress={() => this.enableNavigation('Messages') }>
+                { this.state.showChatCount && 
+                  <Badge style={{ position: 'absolute', left: 25 }}>
+                    <Text>{this.state.unreadChatCount}</Text>
+                  </Badge>
+                }
                 <Icon name="ios-chatboxes-outline" />
               </Button>
             </Right>
           </Header>
         <View style={{ marginTop: -50}}>
+
+         <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: width/6, top: height/2}}>
+          {(this.state.isEmpty || this.state.allSwiped) && <Text> Come back tomorrow for more matches :) </Text>}
+        </View>
+
+        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: width/2, top: height/2}}>
+            <ActivityIndicator animating={this.state.loading} size="large" color="#0000ff" />
+         </View>
+        
+
+
           <Swiper
             ref={swiper => {
               this.swiper = swiper
             }}
-            onTapCard={() => this.setState({ imageViewerVisible: true})} 
+            onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
             cardIndex={this.state.cardIndex}
             backgroundColor={'#4FD0E9'}
             stackSeparation={12}
             stackSize={10}
+            onSwiped={(index) => console.log('onSwiped at index: '+index)}
+            //onSwipedAll={(index) => this.getMatches(this.state.userId)} 
+            onSwipedAll={(index) => this.setState({ swipesStatsShow: true, allSwiped: true })}
             cards={this.state.profiles}
-            onSwipedRight={(index) => this.onSwiped(index,'right',true)} 
+            onSwipedRight={(index) => this.onSwiped(index,'right',true)}//this.state.profile[]cardIndex.potential_match 
             onSwipedLeft={(index) => this.onSwiped(index,'left',false)} 
             overlayLabels={{
               bottom: {
@@ -428,12 +546,19 @@ calculateAge (dateString) {// birthday is a date
                   <Card style={{ elevation: 3 }}>
 
                     <CardItem cardBody>
-                      <View >
+
+                      <View style={{
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',                        
+                      }}>
                         <Image
-                          style={{ height: 510, width: 370}}
+                          resizeMode="cover"
+                          style={{ width: '100%', height: height-230 }}
                           source={{uri: Object.values(item.images)[0].url}}
                         />
                       </View>
+
                      </CardItem>
                     <CardItem>
                       <Left>
@@ -448,10 +573,28 @@ calculateAge (dateString) {// birthday is a date
                 )
             }}>
           </Swiper>
-          {modal}
+
+
         </View>
 
-        <Overlay visible={this.state.matchModalVisible}
+
+
+
+
+
+        <Modal visible={this.state.imageViewerVisible} transparent={true}>
+          <ImageViewer
+            failImageSource = {'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg'}
+            imageUrls = {this.state.matchImages}
+            onSwipeDown = {() => this.setState({ imageViewerVisible: false})}
+            onClick = {() => this.setState({ imageViewerVisible: false})}/>
+          <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
+            {this.state.matchAbout}
+          </Text>
+        </Modal>
+
+
+        <Overlay visible={this.state.swipesStatsShow}
           closeOnTouchOutside = {true}
           animationType="zoomIn"
           onClose={() => this.closeModal()}
@@ -459,39 +602,20 @@ calculateAge (dateString) {// birthday is a date
           childrenWrapperStyle={{backgroundColor: '#eee'}}
           animationDuration={500}
         >
-            <Text style={{fontSize:40, margin:10}}> New Match!</Text>
-             <ProgressCircle
-                  percent={95}
-                  radius={120}
-                  borderWidth={5}
-                  color = '#3399FF'
-                  shadowColor="#999"
-                  bgColor="#fff" 
-                  >
-                <TouchableOpacity activeOpacity={1} onPress={() => this.closeModal(true)}>
-                  <Thumbnail 
-                    blurRadius={25} 
-                    source={{uri: "https://firebasestorage.googleapis.com/v0/b/blurred-195721.appspot.com/o/images%2Ftest.jpg?alt=media&token=d8d75170-a79f-4437-9633-47b5682e064f"}} 
-                    style={{ 
-                      width: 250, 
-                      height: 250
-                    }}/>
-                </TouchableOpacity>
-              </ProgressCircle>
-                <View style={{width: 180, margin:20}}>
-                  <Text style={{textAlign:'center'}}>Send them messages to unblur their photo</Text>
-                </View>
+            <Text style={{fontSize:40, margin:10}}> Congratulations!</Text>
                 <View style={{
                   margin: 10, 
                   borderTopColor: '#bbb',
                   borderTopWidth: 1,
                   width: 300 
                 }}>
-
+                </View>
+                <View style={{width: 180, margin:20}}>
+                  <Text style={{textAlign:'center'}}>Yoh have 3 new matches that want to talk to you.</Text>
                 </View>
                 <View>
-                    <Button transparent onPress={() => this.closeModal(true)} >
-                      <Text>Talk to Andrea</Text>
+                    <Button bordered primary onPress={() => this.closeModal(true)} >
+                      <Text>My matches</Text>
                     </Button>
                 </View>
         </Overlay>

@@ -2,7 +2,6 @@
 //1. name and image need to be specific to the user who is NOT logged in. 
 //  save both images, names, user id's of match particpants in conversation object. Have logic in compoennt to show the image/name of other partiipant, based off userid
 
-
 import React, { Component } from 'react';
 import { connect } from "react-redux";
 import { Image, StyleSheet, Dimensions } from 'react-native';
@@ -44,14 +43,17 @@ class Chat extends Component {
 
     this.state = {
       messages:[],
-      blur: 60,
+      blur: null,
       chatActive: true,
-      timeLeft: 200,
+      timeLeft: null,
+      matchDate: null,
       name: null,
       userName: null,
       userId: null,
+      userIdMatch: null,
       imageViewerVisible: false,
       images: [],
+      about: ''
       //image: null
     }
   }
@@ -104,10 +106,23 @@ class Chat extends Component {
   componentWillMount() {
 
     const { state, navigate } = this.props.navigation;
-    userId = firebase.auth().currentUser.uid;
-    conversationId = state.params.match_id;
-    images = state.params.images; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
+    const userId = firebase.auth().currentUser.uid;
+    let conversationId = state.params.match_id;
+    let images = state.params.images; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
+    let about = state.params.about; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
+    let match_userid = state.params.match_userid;
+
+    //save fb ref for quering conversation data
     firebaseRef = firebase.database().ref('/conversations/'+conversationId+'/');
+
+    //firebase ref for user in context match obj, used to flag all messages have been read
+    firebaseMatchesRef2 = firebase.database().ref('/matches/'+userId+'/'+match_userid+'/');
+
+    //update the unread of my's match obj
+    firebaseMatchesRef2.update({
+      unread_message: false
+    });
+
 
    //listen for new conversation data in db
       firebaseRef.on('value', (dataSnapshot) => {
@@ -128,15 +143,22 @@ class Chat extends Component {
         //first users userid
         var participantArrayFirstID = Object.keys(participantsList)[0];
 
+        //second participants userid
+        var participantArraySecondID = Object.keys(participantsList)[1];
+     
         //if user is first element in participants, then the 2nd element must be participant . 
         if (participantArrayFirstID == userId){
           //participant's  name and images are from second item in array. 
           var participantUser = participantArray['1'];
           var participantLoggedInUser = participantArray['0'];
+          var participantUserId = participantArraySecondID;
+
         }else{
           //participant's  name and images are from first item in array. 
           var participantUser = participantArray['0'];        
           var participantLoggedInUser = participantArray['1'];
+          var participantUserId = participantArrayFirstID;
+
         }
 
         //save participiant Name
@@ -158,14 +180,17 @@ class Chat extends Component {
         })
           //setState with above elements
           this.setState({
+            about: about,
             name: participantName,
             userName: participantLoggedInUserName,
             blur: dataSnapshot.val().blur,
             chatActive: true,
-            timeLeft: dataSnapshot.val().time_left,
+            timeLeft: dataSnapshot.val().time_left, //should be conversation start date. js would subtract today's date from that = time_left
+            matchDate: dataSnapshot.val().match_date,
             image: imagesArray[0].url,
             userId: userId,
-            images: imagesArray
+            userIdMatch: participantUserId,
+            images: imagesArray,
           })
 
       })
@@ -173,11 +198,16 @@ class Chat extends Component {
 
   //send msg to db
   onSend(message) {
+
     const { state, navigate } = this.props.navigation;
     conversationId = state.params.match_id;
 
     firebaseMessagesRef = firebase.database().ref('/conversations/'+conversationId+'/messages/');
     firebaseConversationsRef = firebase.database().ref('/conversations/'+conversationId+'/');
+    
+    //save firebase refs to update matches with last messages
+    firebaseMatchesRef1 = firebase.database().ref('/matches/'+this.state.userIdMatch+'/'+userId+'/');
+    firebaseMatchesRef2 = firebase.database().ref('/matches/'+userId+'/'+this.state.userIdMatch+'/');
 
     //loop through new messages and push back to firebase, which will call loadmessages again. 
     for (let i = 0; i < message.length; i++) {
@@ -193,6 +223,22 @@ class Chat extends Component {
           blur: this.state.blur - 3
         });
       }
+
+      //update the last message and read status of match's match obj
+        firebaseMatchesRef1.update({
+          last_message: message[i].text,
+          last_message_date: (new Date().getTime()*-1), 
+          blur: this.state.blur,
+          unread_message: true
+        });
+
+      //update the last message and read status of match's match obj
+        firebaseMatchesRef2.update({
+          last_message: message[i].text,
+          last_message_date: (new Date().getTime()*-1), 
+          blur: this.state.blur
+        });
+
     }
   }
 
@@ -211,12 +257,13 @@ class Chat extends Component {
 
   render() {
 
-
+    let currentDate = new Date();
+    let timeRemaining =  86000000 - (currentDate.getTime() - this.state.matchDate);
     let {height, width} = Dimensions.get('window');
     const { state, navigate } = this.props.navigation;
     
     let image = this.state.image; //pull first image from images array instead.
-
+    let about = this.state.about;
     return (
       <Container>
         <Modal visible={this.state.imageViewerVisible} transparent={true}>
@@ -226,7 +273,7 @@ class Chat extends Component {
               onClick = {() => this.setState({ imageViewerVisible: false})}
             />
           <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
-            this is some text about who i am. im a really good personplease pick me please please lpease. apples and anabbanas
+          {about}
           </Text>
         </Modal>      
         <Header>
@@ -248,8 +295,8 @@ class Chat extends Component {
           <Text style={{fontWeight:'600', color:'red'}}>TIME REMAINING: </Text>
           <Text numberOfLines ={1} style={{fontWeight:'400', color:'#888', width:200}}> 
             <TimerCountdown
-              initialSecondsRemaining={this.state.timeLeft}
-              onTimeElapsed={() => this.setState({ chatActive: false, timeLeft:0}, console.log(this.state))}
+              initialSecondsRemaining={ timeRemaining }
+              //onTimeElapsed={() => this.setState({ chatActive: false, timeLeft:0}, console.log(this.state))}
               allowFontScaling={true}
               style={{ fontSize: 20 }}
             />

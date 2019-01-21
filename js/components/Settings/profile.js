@@ -92,8 +92,6 @@ class Profile extends Component {
       }
     }
 
-    console.log(this.state);
-
   }
   
   static navigationOptions = ({ navigation }) => {
@@ -236,7 +234,7 @@ class Profile extends Component {
               // ... You can check the source to find the other keys. 
             }}
             onDateChange={(date) => this.setState({
-              profile: { ...this.state.profile, birthday: date}
+               birthday: date
             })
           }
         
