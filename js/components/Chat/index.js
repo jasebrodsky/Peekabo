@@ -11,6 +11,7 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import {
+  ActionSheet,
   Card,
   CardItem,
   Container,
@@ -34,7 +35,9 @@ import { GiftedChat } from 'react-native-gifted-chat';
 import TimerCountdown from 'react-native-timer-countdown'
 import Overlay from 'react-native-modal-overlay';
 
-
+var BUTTONS = ["Unmatch", "Report", "Cancel"];
+var DESTRUCTIVE_INDEX = 2;
+var CANCEL_INDEX = 2;
 
 class Chat extends Component {
 
@@ -45,6 +48,7 @@ class Chat extends Component {
       messages:[],
       blur: null,
       chatActive: true,
+      removed: false,
       timeLeft: null,
       matchDate: null,
       name: null,
@@ -191,6 +195,7 @@ class Chat extends Component {
             userId: userId,
             userIdMatch: participantUserId,
             images: imagesArray,
+            removed: dataSnapshot.val().removed
           })
 
       })
@@ -229,7 +234,7 @@ class Chat extends Component {
           last_message: message[i].text,
           last_message_date: (new Date().getTime()*-1), 
           blur: this.state.blur,
-          unread_message: true
+          unread_message: (this.state.removed == true) ? false : true //if conversation is removed dont set unread messages to true. 
         });
 
       //update the last message and read status of match's match obj
@@ -288,6 +293,48 @@ class Chat extends Component {
           </Body>
 
           <Right>
+              <Button transparent   onPress={() =>
+                  ActionSheet.show(
+                    {
+                      options: BUTTONS,
+                      cancelButtonIndex: CANCEL_INDEX,
+                      destructiveButtonIndex: DESTRUCTIVE_INDEX
+                      
+                    },
+                    buttonIndex => {
+
+                      if ((buttonIndex) == 0){
+                         
+                        //prepare for navigation  
+                        const { navigate } = this.props.navigation;
+
+                        //create ref to set new match object with match_id associated with conversation_id generated above. 
+                        let matchesRef1 = firebase.database().ref('matches/'+userId+'/'+this.state.userIdMatch+'/');
+
+                        //create ref to set new match object with match_id associated with conversation_id generated above. 
+                        let matchesRef2 = firebase.database().ref('matches/'+this.state.userIdMatch+'/'+userId+'/');
+
+                        //save fb ref for quering conversation data
+                        let convoRef = firebase.database().ref('/conversations/'+conversationId+'/');
+
+                        //add removed property to match
+                        matchesRef1.update({removed: true});
+
+                        //add removed property to match
+                        matchesRef2.update({removed: true});
+
+                        //add removed property to conversation as well. 
+                        convoRef.update({removed: true});
+
+                        //navigate to messages. 
+                        navigate("Messages");
+            
+                      }
+                    }
+                  )}
+            >
+                <Icon name="ios-more" />
+              </Button>
           </Right>
         </Header>
         

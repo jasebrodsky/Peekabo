@@ -93,7 +93,13 @@ class Swipes extends Component {
 
           // if chat count is not empty, update state with count and set flag to true. Else, make sure to set flag to false. 
           if(chatSnapshot.val() !== null){
-              
+       
+            
+            
+            // chatArray = Object.entries(chatSnapshot).filter(function( obj ) {
+            //     return obj.removed !== true;
+            // });
+
             //set state with chat count. 
             this.setState({
               unreadChatCount: Object.keys(chatSnapshot.toJSON()).length,
@@ -216,10 +222,10 @@ class Swipes extends Component {
           let matchesRef2 = firebase.database().ref('matches/'+userid_match+'/'+userid+'/');
 
           //create ref to set new conversations key/value pair witin users object.
-          let conersationsMatchesRef1 = firebase.database().ref('/users/'+userid+'/').child("conversations");
+          let conversationsMatchesRef1 = firebase.database().ref('/users/'+userid+'/').child("conversations");
 
           //create ref to set new conversations key/value pair witin users object.
-          let conersationsMatchesRef2 = firebase.database().ref('/users/'+userid_match+'/').child("conversations");
+          let conversationsMatchesRef2 = firebase.database().ref('/users/'+userid_match+'/').child("conversations");
 
           //set new match object
           matchesRef1.set({
@@ -254,12 +260,12 @@ class Swipes extends Component {
           //USE MULTIPLE PATH UPDATING FOR BELOW TWO UPDATES
 
           //push new conversation to profile object.
-          conersationsMatchesRef1.update({
+          conversationsMatchesRef1.update({
             [match_id] : 'true'
         });
 
           //push new conversation to others' profile object.
-          conersationsMatchesRef2.update({
+          conversationsMatchesRef2.update({
             [match_id] : 'true'
         });
 

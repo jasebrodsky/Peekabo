@@ -99,6 +99,11 @@ class Messages extends Component {
           </Text>
         </Body>
       </ListItem>
+
+
+
+
+
       )
   }
   
@@ -114,9 +119,11 @@ class Messages extends Component {
       firebaseRef.once('value')
        .then((matchSnap) => {
 
-          //push match objects into convos array
+          //push match objects into convos array. If match is removed, don't add to arrary. 
           matchSnap.forEach((item) => {
-            convos.push(item);
+            if(item.toJSON().removed !== true){
+               convos.push(item);
+            }
           })
 
           //check if matchSnap is empty, if so show empty state else render matche
@@ -139,15 +146,12 @@ class Messages extends Component {
               }
             );
 
-
               //firebase ref to user obj
               firebaseProfileRef = firebase.database().ref('/users/' + userId);
 
               //update db with current_conversations_count, as the last_conversation_count, so that user won't see a notificaiotn until they have unseen match. 
               firebaseProfileRef.update({last_conversation_count: convos.length});
 
-
-              
 
               //RESET current_conversations_count TO 0
               //firebaseProfileRef.update({unread_conversation_count: 0});
