@@ -41,7 +41,7 @@ class Swipes extends Component {
       user_images: '',
       user_about: '',
       matchImages: [{url: 'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg'}],
-      matchAbout: 'test about in modal here',
+      matchAbout: '',
       profiles: [],
       loading: true,
       unreadChatCount: 0,
@@ -55,11 +55,6 @@ class Swipes extends Component {
       query_end: null,
       cardIndex: 0
     }
-  }
-
-
-  showAlert() {
-    alert("hola senor!");
   }
 
   componentDidMount() {
@@ -76,10 +71,6 @@ class Swipes extends Component {
 
     //run newBatch in order to reset swipe count to 0 at the right time. 
     this.newBatch(userId);
-
-
- 
-
 
     //query for logged in users information needed and set state with it.     
     firebase.database().ref('/users/' + userId).on('value', ((snapshot) => {
@@ -315,9 +306,6 @@ class Swipes extends Component {
   }
 
 
-
-
-
   //Function to save new swipe object
   calculateAge (dateString) {// birthday is a date
       var today = new Date();
@@ -330,50 +318,52 @@ class Swipes extends Component {
       return age;
   }
 
-    //handle swipe events
-    onSwiped = (cardIndex, direction) => {
-      // save variable for direction of swipe
-      let like = (direction == 'right') ? true : false;
+  //handle swipe events
+  onSwiped = (cardIndex, direction) => {
+    // save variable for direction of swipe
+    let like = (direction == 'right') ? true : false;
 
-      // save to firebase db swipe event and possible match
-      this.pushNewSwipe(
-            like, //like
-            this.state.userId, //userid
-            this.state.profiles[cardIndex].userid, //userid match
-            this.state.profiles[cardIndex].match_type, // potential match // this.state.profiles[cardIndex].potential_match
-            this.state.profiles[cardIndex].first_name, //match name
-            this.state.profiles[cardIndex].about, //match about
-            this.state.profiles[cardIndex].images //matche images
-          ),this.setState({ cardIndex: cardIndex+1});//update card index in state, so that image modal has correct images 
+    // save to firebase db swipe event and possible match
+    this.pushNewSwipe(
+          like, //like
+          this.state.userId, //userid
+          this.state.profiles[cardIndex].userid, //userid match
+          this.state.profiles[cardIndex].match_type, // potential match // this.state.profiles[cardIndex].potential_match
+          this.state.profiles[cardIndex].first_name, //match name
+          this.state.profiles[cardIndex].about, //match about
+          this.state.profiles[cardIndex].images //matche images
+        ),this.setState({ cardIndex: cardIndex+1});//update card index in state, so that image modal has correct images 
   };
 
+  //function to load new batch of matches from getMatches service at the new batch time (12) 
   newBatch = (userid) => {
     
-    //calculate miliseconds until time, then update swipe count to 0. 
+    //save context of this
+    var _this = this;
+    
+    //calculate miliseconds until batch time, then update swipe count to 0. 
     var now = new Date();
-    var millisTill10 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 46, 0, 0) - now;
-    if (millisTill10 < 0) {
-         millisTill10 += 86400000; // it's after 10am, try 10am tomorrow.
+    var millisTillBatch = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0) - now;
+    if (millisTillBatch < 0) {
+         millisTillBatch += 86400000; // it's after 10am, try 10am tomorrow.
     }
 
-      setTimeout(function(){
+    //set up setTimeout function
+    this.timer = setTimeout(() => {
 
-        //save flag that user has now seen their daily match
-        let userRef = firebase.database().ref('users/'+userid+'/');
+      //save ref, in order to update swipe count to 0
+      let userRef = firebase.database().ref('users/'+userid+'/');
 
-        //update swipe count in db in order to compute remaining matches. 
-        userRef.update({
+      //update swipe count in db in order to compute remaining matches. 
+      userRef.update({ 
           swipe_count: 0,
           last_swipe_sesh_date: new Date().getTime()
-        }); 
-
-      alert('testing');
-
-
-      }, millisTill10);
-
-    
-
+      }).then(function(){
+        _this.getMatches(userid);
+      }).catch(function(error) {
+        console.log("Data could not be saved." + error);
+      });
+    }, millisTillBatch);
   }
 
   enableNavigation = (view) => {

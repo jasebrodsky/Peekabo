@@ -52,14 +52,14 @@ exports.getMatches = functions.https.onRequest((req, res) => {
 
         //compute lastBatchDate, the last timestamp when it was noon 
         //if it's after noon, then set last batch date to today at noon
-        if (current_date.getHours()>=21){
+        if (current_date.getHours()>=12){
           last_batch_date.setDate(current_date.getDate());
-          last_batch_date.setHours(21,0,0,0);
+          last_batch_date.setHours(12,0,0,0);
 
         } else{
           //else must be before noon, set last batch day to yesterday at noon
           last_batch_date.setDate(current_date.getDate()-1);
-          last_batch_date.setHours(21,0,0,0);
+          last_batch_date.setHours(12,0,0,0);
         }
 
 
