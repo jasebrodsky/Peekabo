@@ -20,6 +20,7 @@ import {
   ListItem,
   Thumbnail,
   Right,
+  Separator,
   Body,
   View
 } from "native-base";
@@ -39,7 +40,8 @@ class Messages extends Component {
       convoData: [],
       currentDate: new Date(),
       loading: true,
-      isEmpty: false
+      isEmpty: false,
+      expiredMatches: false
     }
 
   }
@@ -61,7 +63,7 @@ class Messages extends Component {
 
   //render each ListItem element
   //figure out how to locate the properties of the 'x' object passed in the function below. Looks like those properties are null for some reason 
-  convoRender(x, i){
+  convoRender(x, i, type){
     const { navigate } = this.props.navigation; //needed for navigation functions
     let object = x.toJSON(); //convert to JSON
     let blur = Number(object.blur);
@@ -74,37 +76,63 @@ class Messages extends Component {
     let last_message_date = object.last_message_date;
     let timeRemaining =  86000000 - (this.state.currentDate.getTime() - match_date);
     let percent_left = (timeRemaining/86000000)*100;
+    let match_state = (timeRemaining > 0) ? 'active' : 'expired';
     let match_id = object.match_id;
     let unread_message = object.unread_message;
     let bold = (unread_message == true) ? '900' : 'normal';
     let match_userid = object.match_userid;
+    let expiredMatches = false;
+    
+    if (type == 'active' && match_state == 'active'){
+      
+      return(
+        <ListItem key={i} onPress={() => navigate("Chat", {match_id: match_id, match_state: match_state, match_userid: match_userid, about: about, name: name, images:images, blurRadius: blur })}>        
+          <ProgressCircle
+              matchStatus = {match_state}
+              blur={blur}
+              percent={percent_left}
+              radius={35}
+              borderWidth={5}
+              color = {percent_left>50 ? '#3399FF' : percent_left>20 ? 'orange' : 'red'}
+              shadowColor="#999"
+              bgColor="#fff"
+          >
+              <Thumbnail blurRadius={blur} round size={80} source={{uri: url}} />
+            </ProgressCircle>
+          <Body>
+            <Text>{name}</Text>
+            <Text note numberOfLines={1} style={{fontWeight: bold}}>
+              {last_message}
+            </Text>
+          </Body>
+        </ListItem>
+        )
+    }else if (type == 'expired' && match_state == 'expired'){
+      
+      return(
+        <ListItem key={i} onPress={() => navigate("Chat", {match_id: match_id, match_state: match_state, match_userid: match_userid, about: about, name: name, images:images, blurRadius: blur })}>        
+          <ProgressCircle
+              blur={blur}
+              matchStatus = {match_state}
+              percent={percent_left}
+              radius={35}
+              borderWidth={5}
+              color = {percent_left>50 ? '#3399FF' : percent_left>20 ? 'orange' : 'red'}
+              shadowColor="#999"
+              bgColor="#fff"
+          >
+              <Thumbnail blurRadius={blur} round size={80} source={{uri: url}} />
+            </ProgressCircle>
+          <Body>
+            <Text>{name}</Text>
+            <Text note numberOfLines={1} style={{fontWeight: bold}}>
+              {last_message}
+            </Text>
+          </Body>
+        </ListItem>
+        )
+    }
 
-    return(
-      <ListItem key={i} onPress={() => navigate("Chat", {match_id: match_id, match_userid: match_userid, about: about, name: name, images:images, blurRadius: blur })}>        
-        <ProgressCircle
-            blur={blur}
-            percent={percent_left}
-            radius={35}
-            borderWidth={5}
-            color = {percent_left>50 ? '#3399FF' : percent_left>20 ? 'orange' : 'red'}
-            shadowColor="#999"
-            bgColor="#fff"
-        >
-            <Thumbnail blurRadius={blur} round size={80} source={{uri: url}} />
-          </ProgressCircle>
-        <Body>
-          <Text>{name}</Text>
-          <Text note numberOfLines={1} style={{fontWeight: bold}}>
-            {last_message}
-          </Text>
-        </Body>
-      </ListItem>
-
-
-
-
-
-      )
   }
   
 
@@ -121,8 +149,24 @@ class Messages extends Component {
 
           //push match objects into convos array. If match is removed, don't add to arrary. 
           matchSnap.forEach((item) => {
-            if(item.toJSON().removed !== true){
+            
+            //save variables to use in forEach loop
+            let matchDate = item.toJSON().match_date;
+            let timeRemaining =  86000000 - (this.state.currentDate.getTime() - matchDate);
+            let matchState = (timeRemaining > 0) ? 'active' : 'expired';
+            let matchRemoved = item.toJSON().removed;
+
+            //remove matches that have been removed by match
+            if(matchRemoved !== true){
                convos.push(item);
+            }
+
+            //set flag expiredMatches so that render function can show the expired matches seperator. 
+            if (matchState == 'expired' && this.state.expiredMatches == false){  
+              this.setState({
+                expiredMatches: true
+              });
+
             }
           })
 
@@ -169,7 +213,6 @@ class Messages extends Component {
     const height = dimensions.height;
     const width = dimensions.width
 
-
     return (
       <Container>
         <Header>
@@ -198,7 +241,17 @@ class Messages extends Component {
             <List>
               {
                 this.state.convoData.map((n, i) => {
-                    return this.convoRender(n, i);
+                    return this.convoRender(n, i, 'active');
+                })
+              }
+              {this.state.expiredMatches &&
+                <Separator bordered>
+                  <Text>Expired</Text>
+                </Separator>
+              }
+              {
+                this.state.convoData.map((n, i) => {
+                    return this.convoRender(n, i, 'expired');
                 })
               }
             </List>     

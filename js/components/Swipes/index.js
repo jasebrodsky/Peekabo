@@ -589,32 +589,6 @@ class Swipes extends Component {
           </Text>
         </Modal>
 
-
-        <Overlay visible={this.state.swipesStatsShow}
-          closeOnTouchOutside = {true}
-          animationType="zoomIn"
-          onClose={() => this.closeModal()}
-          containerStyle={{backgroundColor: 'rgba(37, 8, 10, 0.78)'}}
-          childrenWrapperStyle={{backgroundColor: '#eee'}}
-          animationDuration={500}
-        >
-            <Text style={{fontSize:40, margin:10}}> Congratulations!</Text>
-                <View style={{
-                  margin: 10, 
-                  borderTopColor: '#bbb',
-                  borderTopWidth: 1,
-                  width: 300 
-                }}>
-                </View>
-                <View style={{width: 180, margin:20}}>
-                  <Text style={{textAlign:'center'}}>Yoh have 3 new matches that want to talk to you.</Text>
-                </View>
-                <View>
-                    <Button bordered primary onPress={() => this.closeModal(true)} >
-                      <Text>My matches</Text>
-                    </Button>
-                </View>
-        </Overlay>
       </Container>
     )
   }

@@ -4,7 +4,7 @@
 
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Image, StyleSheet, Dimensions } from 'react-native';
+import { Alert, Image, StyleSheet, Dimensions } from 'react-native';
 import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -35,7 +35,7 @@ import { GiftedChat } from 'react-native-gifted-chat';
 import TimerCountdown from 'react-native-timer-countdown'
 import Overlay from 'react-native-modal-overlay';
 
-var BUTTONS = ["Unmatch", "Report", "Cancel"];
+var BUTTONS = ["Unmatch", "Report & Block", "Cancel"];
 var DESTRUCTIVE_INDEX = 2;
 var CANCEL_INDEX = 2;
 
@@ -114,8 +114,9 @@ class Chat extends Component {
     let conversationId = state.params.match_id;
     let images = state.params.images; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
     let about = state.params.about; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
-    let match_userid = state.params.match_userid;
-
+    let match_userid = state.params.match_userid; 
+    let match_state = state.params.match_state;
+    
     //save fb ref for quering conversation data
     firebaseRef = firebase.database().ref('/conversations/'+conversationId+'/');
 
@@ -191,6 +192,7 @@ class Chat extends Component {
             chatActive: true,
             timeLeft: dataSnapshot.val().time_left, //should be conversation start date. js would subtract today's date from that = time_left
             matchDate: dataSnapshot.val().match_date,
+            matchActive: match_state == 'active' ? true : false,
             image: imagesArray[0].url,
             userId: userId,
             userIdMatch: participantUserId,
@@ -260,15 +262,31 @@ class Chat extends Component {
     this.setState({timeLeft:0}), navigate("Messages");
   }
 
+  expiredChat = () => {
+
+    return (
+      <View style={{ height: 150, backgroundColor: 'white', alignItems:'center', flexDirection:'column', justifyContent: 'center'}}>
+        <Text style = {{paddingBottom: 5, fontWeight: '700'}}>Need some extra time?</Text>
+        <Text>Ask for permission to extend</Text>
+        <View style={{ paddingTop: 20}}>
+          <Button rounded bordered><Text>Extend</Text></Button>
+        </View>
+      </View>
+    );
+
+  }
+
+
   render() {
 
+    const { state, navigate } = this.props.navigation;
     let currentDate = new Date();
     let timeRemaining =  86000000 - (currentDate.getTime() - this.state.matchDate);
+    timeRemaining = timeRemaining > 0 ? timeRemaining : 0;
     let {height, width} = Dimensions.get('window');
-    const { state, navigate } = this.props.navigation;
-    
     let image = this.state.image; //pull first image from images array instead.
     let about = this.state.about;
+    let matchActive = this.state.matchActive;
     return (
       <Container>
         <Modal visible={this.state.imageViewerVisible} transparent={true}>
@@ -331,11 +349,20 @@ class Chat extends Component {
             
                       }else if ((buttonIndex) == 1){
                         //report user
-                        alert('We will investigate this person. You can remove them from your matches by clicking the unmatch button.')
-                        
+
+                        Alert.alert(
+                          'Report & Block',
+                          'We take reports seriously and will investigate this person as well as block them from interacting with you in the future. If you just want to unmatch tap "unmatch" instead.',
+                          [
+                            {text: 'Unmatch', onPress: () => console.log('Ask me later pressed')},
+                            {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+                            {text: 'Report & Block', onPress: () => console.log('report Pressed')},
+                          ],
+                          { cancelable: false }
+                        ) 
+
                         //add removed property to conversation as well. 
                         convoRef.update({reported: userId});                     
-
                       }
                     }
                   )}
@@ -350,35 +377,13 @@ class Chat extends Component {
           <Text numberOfLines ={1} style={{fontWeight:'400', color:'#888', width:200}}> 
             <TimerCountdown
               initialSecondsRemaining={ timeRemaining }
-              //onTimeElapsed={() => this.setState({ chatActive: false, timeLeft:0}, console.log(this.state))}
+              onTimeElapsed={() => this.setState({ matchActive: false, timeLeft:0})}
               allowFontScaling={true}
               style={{ fontSize: 20 }}
             />
           </Text> 
               <Icon ios='ios-photos-outline' android="md-photos" onPress={() => this.setState({ imageViewerVisible: true})} style={{fontSize: 30, color: 'black',}}/>
         </View>
-        
-
-        <Overlay visible={!this.state.chatActive}
-              closeOnTouchOutside animationType="zoomIn"
-              containerStyle={{backgroundColor: 'rgba(37, 8, 10, 0.78)'}}
-              childrenWrapperStyle={{backgroundColor: '#eee'}}
-              animationDuration={500}>
-
-                <Text style={{fontSize:20}}>Conversation Expired :(</Text>
-                
-                <View style={{margin:20}}>
-                  <Text>Sorry about that, every conversation will expires after one week</Text>
-                </View>
-                
-                <View>
-                  <Button transparent onPress={() => this.closeModal()} >
-            
-                    <Text>Ok</Text>
-                  </Button>
-                </View>
-        </Overlay>
-
 
         <View>
           <Image source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
@@ -389,7 +394,8 @@ class Chat extends Component {
 
         <GiftedChat
           messages={this.state.messages}
-          //onSend={messages => this.onSend2(messages)}
+          renderInputToolbar={matchActive == false ? () => null : undefined}
+          minInputToolbarHeight = {matchActive == false ? 0 : undefined}
           onSend={
             (message) => {
               this.onSend(message);
@@ -397,6 +403,15 @@ class Chat extends Component {
           }
           user={{_id: this.state.userId, _name: this.state.userName }}
         />
+
+        {!matchActive &&
+
+        <View style={{ height: 100, backgroundColor: 'white', alignItems:'center', flexDirection:'column', justifyContent: 'center'}}>
+          <Text style = {{ fontWeight: '700'}}>This conversation has expired</Text>
+          <Text>Better luck next time.</Text>
+        </View>
+         }
+
       </Container>
     );
   }
