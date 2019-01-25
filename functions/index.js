@@ -36,6 +36,11 @@ exports.getMatches = functions.https.onRequest((req, res) => {
     const userid = req.query.userid;
     let rankedMatches = [];
     let remainingSwipes = 10;
+    let max_age = 50;
+    let min_age = 18;
+    let gender_pref = '';
+    let latitude = '';
+    let longitude = '';
 
     //save eligibleMatches into const which returns promise -- these will be the users who fit user in context preferences
     const eligibleMatches = admin.database().ref('/users/' + userid).once('value').then(userPrefSnap => {
@@ -43,8 +48,8 @@ exports.getMatches = functions.https.onRequest((req, res) => {
         // save preferences of user to use later in following query
         let latitude = userPrefSnap.val().latitude;
         let longitude = userPrefSnap.val().longitude;
-        let max_age = userPrefSnap.val().max_age;
-        let min_age = userPrefSnap.val().min_age;
+        max_age = userPrefSnap.val().max_age;
+        min_age = userPrefSnap.val().min_age;
         let swipe_count = userPrefSnap.val().swipe_count;
         let last_swipe_sesh_date = userPrefSnap.val().last_swipe_sesh_date;
         let current_date = new Date();
@@ -108,38 +113,36 @@ exports.getMatches = functions.https.onRequest((req, res) => {
           //calculate remaining swipes from original 10
           remainingSwipes = 10 - swipe_count; 
 
-          // save gender pref variable       
-          let gender_pref = userPrefSnap.val().gender_pref;
+          // update gender pref variable       
+          gender_pref = userPrefSnap.val().gender_pref;
 
           // translate user's gender_pref into who they're interested in. 
-          switch (gender_pref) {
-            case 'female_straight':
+          switch (true) {
+            case (gender_pref == 'female_straight'):
               var query_start = 'male_bi';
               var query_end = 'male_straight';
               //above query will include male_gay since it's inbetween male_bi and male_straight
               break;
-            case 'male_straight':
+            case (gender_pref == 'male_straight'):
               var query_start = 'female_bi';
               var query_end = 'female_straight';
               break;
-            case 'male_gay':
+            case (gender_pref == 'male_gay'):
               var query_start = 'male_bi';
               var query_end = 'male_gay';
               break;
-            case 'female_gay':
+            case (gender_pref == 'female_gay'):
               var query_start = 'female_bi';
               var query_end = 'female_gay';
               break;
-            // case 'male_bi':
-            //   console.log('female_straight' + 'female_bi' +'AND'+ 'male_gay' + 'male_bi');
-            //   let query_start = 'male_bi';
-            //   let query_end = 'male_straight';
-            //   break;
-            // case 'female_bi':
-            //   console.log('male_straight' + 'male_bi' +'AND'+ 'female_gay' + 'female_bi');
-            //   let query_start = 'male_bi';
-            //   let query_end = 'male_straight';
-            //   break;
+            case (gender_pref == 'male_bi'):
+              var query_start = 'female_bi';
+              var query_end = 'male_straight';
+              break;
+            case (gender_pref == 'female_bi'):
+              var query_start = 'female_bi';
+              var query_end = 'male_straight';
+              break;
             default:
               console.log('Sorry, we are out of ' + expr + '.');
           }
@@ -147,6 +150,7 @@ exports.getMatches = functions.https.onRequest((req, res) => {
           //return promise of users who are fit users preferences and limited to their remaining swipes
           return admin.database().ref('users').orderByChild('gender_pref').startAt(query_start).endAt(query_end).once('value', (eligibleMatchesSnap) => {
             return eligibleMatchesSnap
+            //if user is BI, append male_gay or female_gay users to eligiblematch array here. 
           })   
         }
      
@@ -238,9 +242,37 @@ exports.getMatches = functions.https.onRequest((req, res) => {
           eligibleMatchesSnapArray.push(eligbleMatchObj);
         });
 
-        //remove deleted profiles by removing objects with prop deleted
-        eligibleMatchesSnapArray = eligibleMatchesSnapArray.filter(function( matchObj ) {
-          return matchObj.status !== 'deleted';
+        //remove non 'active' profiles and profiles outside of user prefs by removing those objects
+        eligibleMatchesSnapArray = eligibleMatchesSnapArray.filter(( matchObj ) => {
+          
+          //convert matchObject birthday into age
+          let matchObjAge = ((new Date()).getTime() - (new Date(matchObj.birthday).getTime())) / (1000 * 60 * 60 * 24 * 365);
+          let genderPrefRemove = '';
+          //check if users is bi, if so remove same-sex straight users. 
+          if (gender_pref == 'male_bi'){
+            genderPrefRemove = 'male_straight';
+          }else if (gender_pref == 'female_bi'){
+            genderPrefRemove = 'female_straight';
+          }else{
+            genderPrefRemove = null;
+          }
+
+          //convert my location coordinates into max and min coordinates for eligble matches. 
+          // let max_lat = latitude + '20 miles';
+          // let min_lat = latitude - '20 miles';
+          // let max_long = longitude + '20 miles';
+          // let min_long = longitude - '20 miles';
+
+          //return matches after passing requirements
+          return matchObj.status == 'active' && //only active profiles
+                 matchObj.gender_pref !== genderPrefRemove && //remove same-sex straight profiles, if user is bi. 
+                 // matchObjLat >= min_lat && // greater than min latidude
+                 // matchObjLat <= max_lat && //less than max latidude  
+                 // matchObjLong >= min_long && // greater than min longitude
+                 // matchObjLong <= max_long && //less than max longitude  
+                 matchObjAge >= min_age && // greater than min_age
+                 matchObjAge <= max_age; //less than max_age
+
         });
 
         //sort array by child property lastLogin
@@ -330,9 +362,6 @@ exports.getMatches = functions.https.onRequest((req, res) => {
       // results[2] = swipesReceivedRight - sort to top (potential matches)
       // results[3] = swipesGivenLeft -- sort to bottom user disliked already
       // results[4] = swipesGivenRight -- remove, user already liked
-
-
-
 
 
 
