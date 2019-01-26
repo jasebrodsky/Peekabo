@@ -5,6 +5,7 @@ import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
 import ImagePicker from 'react-native-image-crop-picker';
+import MultiSlider from 'react-native-multi-slider';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Geocoder from 'react-native-geocoding';
 import * as firebase from "firebase";
@@ -37,10 +38,6 @@ import {
 import { setIndex } from "../../actions/list";
 import { openDrawer } from "../../actions/drawer";
 
-var CITY_OPTIONS = [
-  'New York City',  
-  'Cancel',
-];
 
 var PHOTO_OPTIONS = [
   'View photo',  
@@ -81,7 +78,6 @@ class Settings extends Component {
         last_name: null,
         latitude: null,
         longitude: null,
-        city_state: null,
         gender: null,
         birthday: 'Select a date',
         interested: null,
@@ -183,10 +179,15 @@ class Settings extends Component {
       }
   }
 
-  //functoin to pause user in db
+
+  //functions to convert miles to/from meters to use for writing/reading from db. 
+  getMiles = (i) => Math.round(i*0.000621371192);
+  getMeters = (i) => i*1609.344;
+
+  //function to pause user in db
   pauseUser = () => firebaseRef.update({status: 'paused'});
 
-  //functoin to resume user in db
+  //function to resume user in db
   resumeUser = () => firebaseRef.update({status: 'active'});
 
   //function to guide user through the delete flow
@@ -637,34 +638,7 @@ class Settings extends Component {
 
                 />
               </Item>
-              <Item 
-                fixedLabel 
-                  onPress={()=> ActionSheet.show
-                      (
-                        {
-                          options: CITY_OPTIONS,
-                          cancelButtonIndex: 1,
-                          destructiveButtonIndex: 1,
-                          title: 'City'
-                        },
-                        (buttonIndex) => {
-                          if ((buttonIndex) === 1) {
-                               console.log(CITY_OPTIONS[buttonIndex])
-                            } 
-                            else {
-                              this.setState({
-                                profile: { ...this.state.profile, city_state: CITY_OPTIONS[buttonIndex]}
-                              }), firebaseRef.update({city_state: CITY_OPTIONS[buttonIndex]});
-                            }
-                        }
-                      )
-                    }  >
-                  <Label>Location</Label>
-                  <Input 
-                    disabled
-                    value={this.state.profile.city_state }
-                  />
-              </Item>
+
               <Item 
                 fixedLabel
                     onPress={()=> ActionSheet.show
@@ -790,37 +764,43 @@ class Settings extends Component {
                   value={this.state.profile.interested} />
               </Item>
               <Item fixedLabel>
-                <Label>Min Age</Label>
-                  <Slider
-                   style={{ width: 200, right:40 }}
-                   step={1}
-                   minimumValue={18}
-                   maximumValue={55}
-                   value={this.state.profile.min_age}
-                   onSlidingComplete={(val) => firebaseRef.update({min_age: val})}
-                   onValueChange={(val) => 
-                    this.setState({profile: { ...this.state.profile, min_age: val}})
-                  }
-                />
+                <Label>Age Range</Label>
+                  <MultiSlider 
+                    min={21}
+                    max={50}
+                    values={[this.state.profile.min_age,this.state.profile.max_age]} 
+                    unselectedStyle = {{backgroundColor: 'lightgrey'}} 
+                    sliderLength={170} 
+                    markerStyle={{ height:30, width: 30, borderRadius: 15, backgroundColor:'white', borderWidth: 0.5, borderColor: 'grey'}} 
+                    trackStyle={{ borderRadius: 7, height: 2 }} 
+                    containerStyle={{ width: 170, top: 12, right:40}}
+                    onValuesChange={(val) => 
+                     this.setState({profile: { ...this.state.profile, min_age: val[0], max_age: val[1]}})
+                    }
+                    onValuesChangeFinish={(val) => firebaseRef.update({min_age: val[0], max_age: val[1]})}
+
+                  />
+
                 <Text style={{ right:20}}>
-                    {this.state.profile.min_age}
+                    {this.state.profile.min_age} - {this.state.profile.max_age == 50 ? '50+' : this.state.profile.max_age}
                 </Text>
               </Item>
+
               <Item fixedLabel>
-                <Label>Max Age</Label>
+                <Label>Max Dist</Label>
                   <Slider
-                   style={{ width: 200, right:40 }}
-                   step={1}
-                   minimumValue={18}
-                   maximumValue={55}
-                   value={this.state.profile.max_age}
-                   onSlidingComplete={(val) => firebaseRef.update({max_age: val})}
+                   style={{ width: 160, right:40 }}
+                   step={10}
+                   minimumValue={10}
+                   maximumValue={200}
+                   value={this.getMiles(this.state.profile.max_distance)}
+                   onSlidingComplete={(val) => firebaseRef.update({max_distance: this.getMeters(val)})}
                    onValueChange={(val) => 
-                    this.setState({profile: { ...this.state.profile, max_age: val}})
+                    this.setState({profile: { ...this.state.profile, max_distance: this.getMeters(val)}})
                   }
                 />
                 <Text style={{ right:20}}>
-                    {this.state.profile.max_age}
+                    {this.getMiles(this.state.profile.max_distance)} Miles
                 </Text>
               </Item>
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>

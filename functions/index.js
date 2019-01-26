@@ -41,14 +41,16 @@ exports.getMatches = functions.https.onRequest((req, res) => {
     let gender_pref = '';
     let latitude = '';
     let longitude = '';
+    let max_distance = 100;
 
     //save eligibleMatches into const which returns promise -- these will be the users who fit user in context preferences
     const eligibleMatches = admin.database().ref('/users/' + userid).once('value').then(userPrefSnap => {
         
         // save preferences of user to use later in following query
-        let latitude = userPrefSnap.val().latitude;
-        let longitude = userPrefSnap.val().longitude;
-        max_age = userPrefSnap.val().max_age;
+        latitude = userPrefSnap.val().latitude;
+        longitude = userPrefSnap.val().longitude;
+        max_distance = userPrefSnap.val().max_distance;
+        max_age = userPrefSnap.val().max_age == 50 ? 100 : userPrefSnap.val().max_age;
         min_age = userPrefSnap.val().min_age;
         let swipe_count = userPrefSnap.val().swipe_count;
         let last_swipe_sesh_date = userPrefSnap.val().last_swipe_sesh_date;
@@ -257,22 +259,43 @@ exports.getMatches = functions.https.onRequest((req, res) => {
             genderPrefRemove = null;
           }
 
-          //convert my location coordinates into max and min coordinates for eligble matches. 
-          // let max_lat = latitude + '20 miles';
-          // let min_lat = latitude - '20 miles';
-          // let max_long = longitude + '20 miles';
-          // let min_long = longitude - '20 miles';
+          // number of km per degree = ~111km (111.32 in google maps, but range varies between 110.567km at the equator and 111.699km at the poles)
+          // 1km in degree = 1 / 111.32km = 0.0089
+          // 1m in degree = 0.0089 / 1000 = 0.0000089
+          let coef = max_distance * 0.0000089;
+
+          //max coordiantes is user current lat + distance
+          let max_lat = latitude + coef;
+          let max_long = longitude + coef / Math.cos(latitude * 0.018);
+
+          //min coordiantes is user current lat + distance
+          let min_lat = latitude - coef;
+          let min_long = longitude - coef / Math.cos(latitude * 0.018);
+
+          //logging for tests
+          console.log('current lat is: '+latitude);
+          console.log('current long is: '+longitude);
+          console.log('coef is: '+coef);
+
+          console.log('min_lat is: '+min_lat);
+          console.log('min_long is: '+min_long);
+          console.log('max_lat is: '+max_lat);
+          console.log('max_long is: '+max_long);
+          console.log('max_age is: '+max_age);
+
+          console.log('matchObj.latitude is: '+matchObj.latitude);
+          console.log('matchObj.longitude is: '+matchObj.longitude);
 
           //return matches after passing requirements
           return matchObj.status == 'active' && //only active profiles
+                 matchObj.userid !== userid && //remove users own profile. 
                  matchObj.gender_pref !== genderPrefRemove && //remove same-sex straight profiles, if user is bi. 
-                 // matchObjLat >= min_lat && // greater than min latidude
-                 // matchObjLat <= max_lat && //less than max latidude  
-                 // matchObjLong >= min_long && // greater than min longitude
-                 // matchObjLong <= max_long && //less than max longitude  
+                 matchObj.latitude >= min_lat && // greater than min latidude
+                 matchObj.latitude <= max_lat && //less than max latidude  
+                 matchObj.longitude >= min_long && // greater than min longitude
+                 matchObj.longitude <= max_long && //less than max longitude  
                  matchObjAge >= min_age && // greater than min_age
                  matchObjAge <= max_age; //less than max_age
-
         });
 
         //sort array by child property lastLogin

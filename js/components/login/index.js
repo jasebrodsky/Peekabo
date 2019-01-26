@@ -176,7 +176,7 @@ onLoginOrRegister = () => {
                       var state_address_component = json.results[0].address_components[5];
                       var city_state = city_address_component.long_name+', '+state_address_component.short_name;
                       console.log(firebaseRefCurrentUser);
-                    firebaseRefCurrentUser.update({last_login: Date.now(), city_state: city_state, latitude: position.coords.latitude, longitude: position.coords.longitude}), navigator.geolocation.clearWatch(this.watchId);
+                    firebaseRefCurrentUser.update({city_state: city_state, latitude: position.coords.latitude, longitude: position.coords.longitude}), navigator.geolocation.clearWatch(this.watchId);
                     },
                     error => {
                       alert(error);
