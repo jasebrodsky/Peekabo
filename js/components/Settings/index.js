@@ -118,6 +118,9 @@ class Settings extends Component {
         profile: dataSnapshot.val()
       }) 
     })
+
+    this.getLocation()
+
   }  
 
   componentWillUnmount() {
@@ -138,6 +141,34 @@ class Settings extends Component {
       profile: { ...this.state.profile, notifications_match: !this.state.profile.notifications_match}
     }); 
      console.log(this.state);
+  }
+
+  //function to get update users current location. 
+  getLocation = () => {
+
+    //save ref to current user in db. 
+    firebaseRefCurrentUser = firebase.database().ref('/users/' + userId);
+
+    //Let's run this code once immeditately after login (login index.js), so that location will only on login instead of every time user. Switch to getCurrentPosition 
+    this.watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        // this is firing 3 times for some reason??? shouldn't be calling google api more than once. 
+        // this only fires after phone retart, bad UX when user moves locations re-logs in and location doesn't update. 
+        // Why not limit to only NYC metro area. Users selects dropdown with city, while in beta. 
+        Geocoder.getFromLatLng(position.coords.latitude, position.coords.longitude).then(
+          json => {
+            let city_address_component = json.results[0].address_components[3];
+            let state_address_component = json.results[0].address_components[5];
+            let city_state = city_address_component.long_name+', '+state_address_component.short_name;
+          firebaseRefCurrentUser.update({city_state: city_state, latitude: position.coords.latitude, longitude: position.coords.longitude}), navigator.geolocation.clearWatch(this.watchId);
+          },
+          error => {
+            console.log('error getting geo coords: '+error);
+          }, 
+        )
+      },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000, distanceFilter: 300000 },
+    );
   }
 
 
