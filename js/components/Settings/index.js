@@ -768,19 +768,22 @@ class Settings extends Component {
                   <MultiSlider 
                     min={21}
                     max={50}
-                    values={[this.state.profile.min_age,this.state.profile.max_age]} 
+                    values={[30,45]} 
                     unselectedStyle = {{backgroundColor: 'lightgrey'}} 
-                    sliderLength={170} 
+                    sliderLength={160} 
                     markerStyle={{ height:30, width: 30, borderRadius: 15, backgroundColor:'white', borderWidth: 0.5, borderColor: 'grey'}} 
                     trackStyle={{ borderRadius: 7, height: 2 }} 
                     containerStyle={{ width: 170, top: 12, right:40}}
                     onValuesChange={(val) => 
-                     this.setState({profile: { ...this.state.profile, min_age: val[0], max_age: val[1]}})
+                        this.setState(prevState => ({
+                            profile: {
+                                ...prevState.profile,
+                                min_age: val[0], max_age: val[1]
+                            }
+                        }))              
                     }
                     onValuesChangeFinish={(val) => firebaseRef.update({min_age: val[0], max_age: val[1]})}
-
                   />
-
                 <Text style={{ right:20}}>
                     {this.state.profile.min_age} - {this.state.profile.max_age == 50 ? '50+' : this.state.profile.max_age}
                 </Text>
