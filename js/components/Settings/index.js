@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Image, Alert, Modal, StyleSheet, ScrollView, FlatList, Slider, TouchableOpacity } from 'react-native';
+import { Image, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
@@ -8,6 +8,7 @@ import ImagePicker from 'react-native-image-crop-picker';
 import MultiSlider from 'react-native-multi-slider';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Geocoder from 'react-native-geocoding';
+import RNFetchBlob from 'rn-fetch-blob';
 import * as firebase from "firebase";
 import {
   ActionSheet,
@@ -265,16 +266,24 @@ class Settings extends Component {
 // 2. UPDATE DB: update users/images obj's URI of stored images in realtime db
 // 3. REFLECT: when images in db changes, update component state
 
-  pickMultiple() {
+  pickImage() {
     ImagePicker.openPicker({
       compressImageQuality: 0.2,
-      multiple: true,
+      multiple: false,
+      forceJpg: true,
+      cropping: true,
+      width: 600,
+      height: 800,
+      showCropGuidelines: true,
+      mediaType: 'photo',
       includeBase64: true,
       waitAnimationEnd: false,
       includeExif: true,
-    }).then(imagesPhone => {
+    }).then(image => {
 
+        console.log('image is: '+JSON.stringify(image));
         // Create a root reference
+        
         var storageRef = firebase.storage().ref(); 
 
         //create reference to userid from state
@@ -283,63 +292,64 @@ class Settings extends Component {
         //count existing images in state and save to var
         // HANDLE WHEN IMAGES ARE EMPTY.. if var == null, var = 0
         var exisiting_images_count = this.state.profile.images.length;
-
-        //loop through each image in imagesPhone
-        // intiate var i at exisiting_images_count+1
-        for (var i = 0; i < imagesPhone.length; i++) {
-
-          // Save images filename post existing images in order to not replace exisiting files in storage
           
           //var image_item_count_start = i+exisiting_images_count;
           var image_item_count_start = exisiting_images_count++;
           console.log('image_item_count_start: '+image_item_count_start);
 
-
           // Create a reference to 'images/userid/i.jpg'
-          // HANDLE NON JPG IMAGES
           var imagesRef = storageRef.child('images/'+userId+'/'+image_item_count_start+'.jpg');
-
-          // save selected image into file var
-          var file = imagesPhone[i]; 
-      
+          
           // save reference to where to save the new URI 
           var imagesObjRef = firebase.database().ref('/users/'+userId+'/images/');
           
           // Push exisiting images into imagesObj
           var imagesObj = this.state.profile.images;
 
-          // put into storage as a Base64 formatted string, save to var uploadTask
-          var uploadTask = Promise.resolve(imagesRef.putString(file.data, 'base64'));
-
-          //listen to uploadTask and get DownloadURL as upload completes, then update database with image object
-          uploadTask
-            .then(image_item_count_start)
-            .then(snapshot => snapshot.ref.getDownloadURL())
-            //NEED TO PASS image_item_count_start INTO BELOW, IN ORDER TO ENSURE URL AND FILE PROPERTIES ARE IN SYNC. 
-            .then((url) => {
-
-              var exisiting_images_count_upload = this.state.profile.images.length;
-
-              var image_item_count_start_upload = exisiting_images_count_upload++;
-
-              // set uri of user's objet image WHY IS ONLY THE LAST ITEM BEING SAVED BELOW?????
-              imagesObj.push({url: url, file: image_item_count_start_upload});
-
-              console.log('imagesObj: '+JSON.stringify(imagesObj));
-
-
-              // Increaes image_item_count_start by one, after image uplode task complete per individual image asset. 
-              //image_item_count_start++;
-
-              //call updateData function with new URI's to pass in multi-path update
-              // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
-             this.updateData('images', userId, imagesObj );
-            
+          //set up properties for image
+          let imagePath = image.path;
+          let Blob = RNFetchBlob.polyfill.Blob
+          let fs = RNFetchBlob.fs
+          window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
+          window.Blob = Blob
+          let mime = 'image/jpg'
+          let uploadUri = Platform.OS === 'ios' ? imagePath.replace('file://', '') : imagePath
+          
+          //read selected image and build blob          
+          fs.readFile(imagePath, 'base64')
+            .then((data) => {
+              //console.log(data);
+              return Blob.build(data, { type: `${mime};BASE64` })
+          })
+          //then upload blob to firebase storage
+          .then((blob) => {
+              uploadBlob = blob
+              return imagesRef.put(blob, { contentType: mime })
             })
-            .catch(console.error);
-        }
-        //this.updateData('images', userId, imagesObj );
+          //then return url of new file from storage
+          .then(() => {
+            uploadBlob.close();
+            return imagesRef.getDownloadURL()
+          })
+          //then update all image references for user in multi-path update
+          .then((url) => {
 
+            //count existing images in state
+            var exisiting_images_count_upload = this.state.profile.images.length;
+
+            //+1 to the exisiting count of images
+            var image_item_count_start_upload = exisiting_images_count_upload++;
+
+            // push new image object into imagesObj 
+            imagesObj.push({url: url, file: image_item_count_start_upload});
+            console.log('imagesObj: '+JSON.stringify(imagesObj));
+
+            //call updateData function with new URI's to pass in multi-path update
+            // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
+           this.updateData('images', userId, imagesObj );
+          
+          })
+          .catch(console.error);                  
       } 
     ).catch(e => console.log(e));
   }
@@ -410,7 +420,8 @@ class Settings extends Component {
                               //remove image
                               //save copy of profile images from state
                               var profile_images = this.state.profile.images; // make a separate copy of the array                                                  
-                              
+                              console.log('profile_images in state: '+JSON.stringify(profile_images));
+ 
                               //remove selected image from storage
                               // Create a reference to the file to delete
                               
@@ -474,44 +485,51 @@ class Settings extends Component {
     //return list of all users' conversations
     userConversations.once('value').then(snap => {
 
-      //console.log('userConversations keys are: '+JSON.stringify(snap));
+      //if user has had a conversation, prepare to update each of their convesations with updated data. 
+      if(snap.exists()){
 
-      //turn list of objects into array on it's keys
-      let conversationsKeys = Object.keys(snap.val());
+        //turn list of objects into array on it's keys
+        let conversationsKeys = Object.keys(snap.val());
 
-      //CONVERSATIONS: add path to update inside updateObj for each conversation record. Switch case for images and name updates. 
-      conversationsKeys.forEach((key, $type) => {
-        switch (type) {
-          case 'images':
-            updateObj[`conversations/${key}/participants/${userid}/images`] = payload;
-            break;
-          case 'name':
-            updateObj[`conversations/${key}/participants/${userid}/name`] = payload;            
-            break;
-        }
-      });
+        //CONVERSATIONS: add path to update inside updateObj for each conversation record. Switch case for images and name updates. 
+        conversationsKeys.forEach((key, $type) => {
+          switch (type) {
+            case 'images':
+              updateObj[`conversations/${key}/participants/${userid}/images`] = payload;
+              break;
+            case 'name':
+              updateObj[`conversations/${key}/participants/${userid}/name`] = payload;            
+              break;
+          }
+        });
+
+      }
     }).then(function() {
  
      //return list of all users' matches
       userMatches.once('value').then(snap => {
 
-        //turn list of objects into array on it's keys
-        let matchesKeys = Object.keys(snap.val());
+        //if user has matches start to prepare updating all matches with new data. 
+        if (snap.exists()){
 
-        //MATCHES: add path to update inside updateObj for each appropriate match record
-        matchesKeys.forEach((key, $type) => {
-          switch (type) {
-            case 'images':
-              updateObj[`matches/${key}/${userid}/images`] = payload;
-              break;
-            case 'name':
-              updateObj[`matches/${key}/${userid}/name`] = payload;
-              break;
-            case 'about':
-              updateObj[`matches/${key}/${userid}/about`] = payload;
-              break;
-          }
-        });
+          //turn list of objects into array on it's keys
+          let matchesKeys = Object.keys(snap.val());
+
+          //MATCHES: add path to update inside updateObj for each appropriate match record
+          matchesKeys.forEach((key, $type) => {
+            switch (type) {
+              case 'images':
+                updateObj[`matches/${key}/${userid}/images`] = payload;
+                break;
+              case 'name':
+                updateObj[`matches/${key}/${userid}/name`] = payload;
+                break;
+              case 'about':
+                updateObj[`matches/${key}/${userid}/about`] = payload;
+                break;
+            }
+          });
+        }
       }).then(function() {
 
         //USERS: add path to update inside updateObj for userid record
@@ -757,7 +775,7 @@ class Settings extends Component {
               <CardItem>
                 <Body>
                     <ScrollView horizontal>
-                      <Button onPress={this.pickMultiple.bind(this)} light style={{ borderRadius: 100, borderWidth: 0.6, borderColor: '#d6d7da',width: 100, height: 100, marginLeft:10, justifyContent: 'center', alignItems: 'center' }}>
+                      <Button onPress={this.pickImage.bind(this)} light style={{ borderRadius: 100, borderWidth: 0.6, borderColor: '#d6d7da',width: 100, height: 100, marginLeft:10, justifyContent: 'center', alignItems: 'center' }}>
                         <Icon  name="ios-add-circle-outline" />
                       </Button>
                       {this.state.profile.images ? Object.entries(this.state.profile.images).map((i, n) => <View key={i[0]}>{this.renderAsset(i[1], i[0])}</View>) : null}                
@@ -816,14 +834,14 @@ class Settings extends Component {
                     onValuesChangeFinish={(val) => firebaseRef.update({min_age: val[0], max_age: val[1]})}
                   />
                 <Text style={{ right:20}}>
-                    {this.state.profile.min_age} - {this.state.profile.max_age == 50 ? '50+' : this.state.profile.max_age}
+                    {this.state.profile.min_age} - {this.state.profile.max_age == 50 ? '50+' : this.state.profile.max_age+' '}
                 </Text>
               </Item>
 
               <Item fixedLabel>
                 <Label>Max Dist</Label>
                   <Slider
-                   style={{ width: 160, right:40 }}
+                   style={{ width: 168, right:40 }}
                    step={10}
                    minimumValue={10}
                    maximumValue={200}

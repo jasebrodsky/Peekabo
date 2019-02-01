@@ -48,6 +48,8 @@
 		556468118A5E4327B55D4759 /* Rubik-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 811776BCECAD4CC99CE312C1 /* Rubik-Black.ttf */; };
 		5737EF63ED6D42F4B1037571 /* Times New Roman.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 611779E988A14105A44DD9B8 /* Times New Roman.ttf */; };
 		59A741C5AFC54A219EB1A93B /* libimageCropPicker.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66E5E131AC804E5DB925F593 /* libimageCropPicker.a */; };
+		5A5CE88E2202B75800CD2B6B /* rn-fetch-blob in Resources */ = {isa = PBXBuildFile; fileRef = 5A5CE88D2202B75800CD2B6B /* rn-fetch-blob */; };
+		5A5CE8952202B90F00CD2B6B /* libRNFetchBlob.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A5CE8942202B8E600CD2B6B /* libRNFetchBlob.a */; };
 		5AA046BA203BE4C500C3479F /* RSKImageCropper.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AA046B9203BE4C500C3479F /* RSKImageCropper.framework */; };
 		5AA046BB203BE4C500C3479F /* RSKImageCropper.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5AA046B9203BE4C500C3479F /* RSKImageCropper.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5AAC828B203BE344003E383F /* QBImagePicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5AAC828C203BE344003E383F /* QBImagePicker.framework */; };
@@ -282,6 +284,13 @@
 			remoteGlobalIDString = 3400A8081CEB54A6008A0BC7;
 			remoteInfo = imageCropPicker;
 		};
+		5A5CE8932202B8E600CD2B6B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5A5CE88F2202B8E600CD2B6B /* RNFetchBlob.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = A15C300E1CD25C330074CB35;
+			remoteInfo = RNFetchBlob;
+		};
 		5ACDF0F620420DA500F60567 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 791BF463752D40AD8DBF1013 /* RCTFBSDK.xcodeproj */;
@@ -417,6 +426,8 @@
 		4FC177C443F34607A3BCDD9B /* Roboto_medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = Roboto_medium.ttf; path = "../node_modules/native-base/Fonts/Roboto_medium.ttf"; sourceTree = "<group>"; };
 		5372D1A319724D0D9FA764D4 /* FontAwesome.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = FontAwesome.ttf; path = "../node_modules/native-base/Fonts/FontAwesome.ttf"; sourceTree = "<group>"; };
 		599D4B67BB7E48C3AA4B430E /* RCTImageResizer.xcodeproj */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = "wrapper.pb-project"; name = RCTImageResizer.xcodeproj; path = "../node_modules/react-native-image-resizer/ios/RCTImageResizer.xcodeproj"; sourceTree = "<group>"; };
+		5A5CE88D2202B75800CD2B6B /* rn-fetch-blob */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "rn-fetch-blob"; path = "../node_modules/rn-fetch-blob"; sourceTree = "<group>"; };
+		5A5CE88F2202B8E600CD2B6B /* RNFetchBlob.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RNFetchBlob.xcodeproj; path = "../node_modules/rn-fetch-blob/ios/RNFetchBlob.xcodeproj"; sourceTree = "<group>"; };
 		5AA046B9203BE4C500C3479F /* RSKImageCropper.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = RSKImageCropper.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AAC828C203BE344003E383F /* QBImagePicker.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = QBImagePicker.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5ACDF0422041198700F60567 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -476,6 +487,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5A5CE8952202B90F00CD2B6B /* libRNFetchBlob.a in Frameworks */,
 				5ACDF114204213FB00F60567 /* libRCTFBSDK.a in Frameworks */,
 				5AAC828B203BE344003E383F /* QBImagePicker.framework in Frameworks */,
 				146834051AC3E58100842450 /* libReact.a in Frameworks */,
@@ -662,6 +674,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		5A5CE8902202B8E600CD2B6B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5A5CE8942202B8E600CD2B6B /* libRNFetchBlob.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		5ACDF0EE20420DA500F60567 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -729,6 +749,7 @@
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				5A5CE88D2202B75800CD2B6B /* rn-fetch-blob */,
 				5E91572D1DD0AC6500FF2AA8 /* RCTAnimation.xcodeproj */,
 				146833FF1AC3E56700842450 /* React.xcodeproj */,
 				00C302A71ABCB8CE00DB3ED1 /* RCTActionSheet.xcodeproj */,
@@ -789,6 +810,7 @@
 		9E20FF512C0F4069B46290EE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5A5CE88F2202B8E600CD2B6B /* RNFetchBlob.xcodeproj */,
 				5ACDF0D72042064900F60567 /* FBSDKShareKit.framework */,
 				5ACDF0D22042061F00F60567 /* FBSDKLoginKit.framework */,
 				5ACDF0CD2042061900F60567 /* FBSDKCoreKit.framework */,
@@ -1023,6 +1045,10 @@
 					ProjectRef = 146833FF1AC3E56700842450 /* React.xcodeproj */;
 				},
 				{
+					ProductGroup = 5A5CE8902202B8E600CD2B6B /* Products */;
+					ProjectRef = 5A5CE88F2202B8E600CD2B6B /* RNFetchBlob.xcodeproj */;
+				},
+				{
 					ProductGroup = 5AFFA1CA2031698C004096B6 /* Products */;
 					ProjectRef = 0F0E1ED7B3794C398792751E /* RNFS.xcodeproj */;
 				},
@@ -1203,6 +1229,13 @@
 			remoteRef = 5A0B0EB82033FAFD0054C932 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		5A5CE8942202B8E600CD2B6B /* libRNFetchBlob.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libRNFetchBlob.a;
+			remoteRef = 5A5CE8932202B8E600CD2B6B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		5ACDF0F720420DA500F60567 /* libRCTFBSDK.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
@@ -1327,6 +1360,7 @@
 				5093DC732EFF43B68093C8FD /* Rubik-MediumItalic.ttf in Resources */,
 				FBEBB798F3F04D008B1F4D2C /* Rubik-Regular.ttf in Resources */,
 				FF22E7CA874046F3B7B89E48 /* SanFrancisco.ttf in Resources */,
+				5A5CE88E2202B75800CD2B6B /* rn-fetch-blob in Resources */,
 				48C204972B95488ABEEBA624 /* SanFranciscoBold.ttf in Resources */,
 				5E25DF87B5E94426BBAADC0C /* SanFranciscoThin.ttf in Resources */,
 				9C31914CD8FF4D5B99E83D40 /* SF-UI-Text-Regular.otf in Resources */,

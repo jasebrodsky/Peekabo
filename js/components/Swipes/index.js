@@ -446,12 +446,11 @@ class Swipes extends Component {
             <ActivityIndicator animating={this.state.loading} size="large" color="#0000ff" />
          </View>
         
-
-
           <Swiper
             ref={swiper => {
               this.swiper = swiper
             }}
+            verticalSwipe = {false}
             onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
             cardIndex={this.state.cardIndex}
             backgroundColor={'#4FD0E9'}

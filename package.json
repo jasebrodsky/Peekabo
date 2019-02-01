@@ -46,7 +46,8 @@
     "redux-form": "^6.7.0",
     "redux-persist": "^4.0.0",
     "redux-thunk": "^2.2.0",
-    "remote-redux-devtools": "^0.5.0"
+    "remote-redux-devtools": "^0.5.0",
+    "rn-fetch-blob": "^0.10.15"
   },
   "devDependencies": {
     "babel-eslint": "^6.1.2",
