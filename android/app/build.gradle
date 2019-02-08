@@ -127,6 +127,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-firebase')
     compile project(':react-native-fbsdk')
     compile project(':react-native-image-crop-picker')
     compile project(':react-native-fs')
