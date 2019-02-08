@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Dimensions, ActivityIndicator, Image,TouchableOpacity,Modal,ScrollView,StyleSheet,Text,View,TouchableWithoutFeedback } from 'react-native'
+import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity,Modal,ScrollView,StyleSheet,Text,View,TouchableWithoutFeedback } from 'react-native'
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -547,7 +547,7 @@ class Swipes extends Component {
                         justifyContent: 'center',
                         alignItems: 'center',                        
                       }}>
-                        <Image
+                        <ImageBackground
                           resizeMode="cover"
                           style={{ width: '100%', height: height-230 }}
                           source={{uri: Object.values(item.images)[0].url}}

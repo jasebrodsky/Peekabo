@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import {Dimensions, ActivityIndicator, Image, ScrollView, ListView } from 'react-native';
+import {Dimensions, ActivityIndicator, ScrollView, ListView } from 'react-native';
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";

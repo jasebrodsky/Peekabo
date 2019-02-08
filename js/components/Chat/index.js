@@ -4,7 +4,7 @@
 
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Alert, Image, StyleSheet, Dimensions } from 'react-native';
+import { Alert, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -386,7 +386,7 @@ class Chat extends Component {
         </View>
 
         <View>
-          <Image source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
+          <ImageBackground source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
           style={[styles.backgroundImage, {height:height, width: width}]}
           />
         </View>

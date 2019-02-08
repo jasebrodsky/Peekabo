@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Image } from "react-native";
+import { ImageBackground } from "react-native";
 import { connect } from "react-redux";
 import * as firebase from "firebase";
 import Geocoder from 'react-native-geocoding';
@@ -314,7 +314,7 @@ onLoginOrRegister = () => {
         <View style={styles.container}>
           <Content>
 
-            <Image source={background} style={styles.shadow}>
+            <ImageBackground source={background} style={styles.shadow}>
               <View>
 
               <Icon type="FontAwesome" name="heart" 
@@ -345,7 +345,7 @@ onLoginOrRegister = () => {
                 </Button>
 
               </View>
-            </Image>
+            </ImageBackground>
           </Content>
         </View>
       </Container>

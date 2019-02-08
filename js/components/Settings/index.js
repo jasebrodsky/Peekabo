@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Image, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
+import { ImageBackground, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
@@ -456,7 +456,7 @@ class Settings extends Component {
                         }
                       )
                     } >
-              <Image style={{width: 100, height: 100, marginLeft:10 }} source={image} />
+              <ImageBackground style={{width: 100, height: 100, marginLeft:10 }} source={image} />
           </TouchableOpacity>
 
   }
