@@ -4,7 +4,7 @@
 
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Alert, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import { Alert, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -221,6 +221,7 @@ class Chat extends Component {
       firebaseMessagesRef.push({
         text: message[i].text, 
         user: message[i].user, 
+        userTo: this.state.userIdMatch,
         createdAt: firebase.database.ServerValue.TIMESTAMP
       });
 
@@ -386,7 +387,7 @@ class Chat extends Component {
         </View>
 
         <View>
-          <ImageBackground source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
+          <Image source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
           style={[styles.backgroundImage, {height:height, width: width}]}
           />
         </View>

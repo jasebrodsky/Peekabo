@@ -38,7 +38,7 @@ class App extends Component {
 
   componentDidMount() {
     
-    this.checkPermission();
+    //this.checkPermission();
 
     CodePush.sync(
       { updateDialog: true, installMode: CodePush.InstallMode.IMMEDIATE },
@@ -78,14 +78,24 @@ class App extends Component {
 
     //3
   async getToken() {
-    let fcmToken = await AsyncStorage.getItem('fcmToken', value);
-    if (!fcmToken) {
-        fcmToken = await firebase.messaging().getToken();
-        if (fcmToken) {
-            // user has a device token
-            await AsyncStorage.setItem('fcmToken', fcmToken);
-        }
+    try {
+      let fcmToken = await AsyncStorage.getItem('fcmToken', value);
+      if (!fcmToken) {
+          fcmToken = await firebase.messaging().getToken();
+          if (fcmToken) {
+              // user has a device token
+              alert('fcmToken is '+fcmToken);
+              await AsyncStorage.setItem('fcmToken', fcmToken);
+          }
+      }else{
+        alert('fcmToken is '+fcmToken);
+      }      
+    } catch (error) {
+      alert('error is: '+error);
+      alert('fcmToken is '+fcmToken);
+
     }
+
   }
 
     //2

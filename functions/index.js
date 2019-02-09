@@ -6,28 +6,58 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 
+exports.notifyNewMessage = functions.database.ref('/conversations/{conversationId}/messages/{messageId}').onCreate((snap, context) => {
+  const message = snap.val();
+  const senderName = message.user._name;
+  const toId = message['userTo'];
+  const fromId = message.user._id;
+  const messageTxt = message ['text'];
 
-// WRITE CLOUD FUNCTION THAT UPDATES PROFILE OBJ (of recieving user) 'unread_conversation_count' by iterating +1 FOR EVERY NEW MESSAGE.
-// WILL ALSO SEND NOTIFICATION FROM HERE AS WELL.
+  return admin.database().ref('/users/' + toId + '/fcmToken').once('value').then((fcmToken) => {
 
-// exports.updateNavNotications = functions.database
-// .ref('/rooms/{roomId}/messages/{messageId}')
-// .onCreate(async (snapshot, context) => {
-//     const roomId = context.params.roomId
-//     const messageId = context.params.messageId
-//     console.log(`New message ${messageId} in room ${roomId}`)
+    const registrationTokens = fcmToken.val()
 
-//     const messageData = snapshot.val()
-//     const text = addPizzazz(messageData.text)
-//     await snapshot.ref.update({ text: text })
+    console.log('registrationTokens is: '+registrationTokens);
 
-//     const countRef = snapshot.ref.parent.parent.child('messageCount')
-//     return countRef.transaction(count => {
-//         return count + 1
-//     })
-// })
+    //build media messages notification
+    const payload = {
+        notification: {
+          title: senderName + " sent you a message",
+          body: messageTxt
+        },
+        data: {
+          SENDER_NAME: senderName,
+          SENDER_ID: fromId
 
+        }//end data
+    }//end payload
 
+    //send message
+    return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
+      const stillRegisteredTokens = registrationTokens;
+
+      response.results.forEach((result, index) => {
+                const error = result.error
+                if (error) {
+                    const failedRegistrationToken = registrationTokens[index]
+                    console.error('blah', failedRegistrationToken, error)
+                    if (error.code === 'messaging/invalid-registration-token'
+                        || error.code === 'messaging/registration-token-not-registered') {
+                            const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
+                            if (failedIndex > -1) {
+                                stillRegisteredTokens.splice(failedIndex, 1)
+                            }
+                        }
+                }
+            })//end forEach
+
+            return admin.database().ref("users/" + toId).update({
+                fcmToken: stillRegisteredTokens
+            })//end update
+
+    })//end sendToDevice
+  })//end return-then
+});
 
 // add in age range/location (in db and function query start and end strings)
 

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { ImageBackground, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
+import { AsyncStorage, ImageBackground, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
+import RNfirebase from 'react-native-firebase';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
@@ -10,6 +11,7 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 import Geocoder from 'react-native-geocoding';
 import RNFetchBlob from 'rn-fetch-blob';
 import * as firebase from "firebase";
+
 import {
   ActionSheet,
   Card,
@@ -124,11 +126,49 @@ class Settings extends Component {
 
   }  
 
+  //After component mounts prompt for permission to recieve notifications and save fcmToken to database
+  componentDidMount() {
+    this.checkPermission();
+  }  
+
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
     firebaseRef.off();
     //alert('component unmounted');
   }
+
+
+
+  // check if permission for notification has been granted previously, then getToken. 
+  async checkPermission() {
+    const enabled = await RNfirebase.messaging().hasPermission();
+    if (enabled) {
+        this.getToken();
+    } else {
+        this.requestPermission();
+    }
+  }
+
+  // getToken if permission has been granted previously
+  async getToken() {
+    fcmToken = await RNfirebase.messaging().getToken();
+    firebaseRef.update({fcmToken: fcmToken});
+    alert('fcmToken is now: '+fcmToken);
+
+  }
+
+  // if permission has not been granted, request for permission. 
+  async requestPermission() {
+    try {
+        await RNfirebase.messaging().requestPermission();
+        // User has authorised
+        this.getToken();
+    } catch (error) {
+        // User has rejected permissions
+        console.log('permission rejected');
+    }
+  }
+
 
   onPressHandle1 = () => {
      this.setState({ 
