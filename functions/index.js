@@ -5,14 +5,17 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-
+//function to send notification when message is recieved. 
 exports.notifyNewMessage = functions.database.ref('/conversations/{conversationId}/messages/{messageId}').onCreate((snap, context) => {
+  
+  //save data of message
   const message = snap.val();
   const senderName = message.user._name;
   const toId = message['userTo'];
   const fromId = message.user._id;
   const messageTxt = message ['text'];
 
+  //fetch fcmToken of reciepient in order to send push notification
   return admin.database().ref('/users/' + toId + '/fcmToken').once('value').then((fcmToken) => {
 
     const registrationTokens = fcmToken.val()
@@ -26,8 +29,9 @@ exports.notifyNewMessage = functions.database.ref('/conversations/{conversationI
           body: messageTxt
         },
         data: {
-          SENDER_NAME: senderName,
-          SENDER_ID: fromId
+          // SENDER_NAME: senderName,
+          // SENDER_ID: fromId,
+          VIEW: 'messages'
 
         }//end data
     }//end payload
@@ -37,27 +41,87 @@ exports.notifyNewMessage = functions.database.ref('/conversations/{conversationI
       const stillRegisteredTokens = registrationTokens;
 
       response.results.forEach((result, index) => {
-                const error = result.error
-                if (error) {
-                    const failedRegistrationToken = registrationTokens[index]
-                    console.error('blah', failedRegistrationToken, error)
-                    if (error.code === 'messaging/invalid-registration-token'
-                        || error.code === 'messaging/registration-token-not-registered') {
-                            const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
-                            if (failedIndex > -1) {
-                                stillRegisteredTokens.splice(failedIndex, 1)
-                            }
-                        }
+        const error = result.error
+        if (error) {
+            const failedRegistrationToken = registrationTokens[index]
+            console.error('blah', failedRegistrationToken, error)
+            if (error.code === 'messaging/invalid-registration-token'
+                || error.code === 'messaging/registration-token-not-registered') {
+                    const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
+                    if (failedIndex > -1) {
+                        stillRegisteredTokens.splice(failedIndex, 1)
+                    }
                 }
-            })//end forEach
+          }
+        })//end forEach
 
-            return admin.database().ref("users/" + toId).update({
-                fcmToken: stillRegisteredTokens
-            })//end update
+        return admin.database().ref("users/" + toId).update({
+            fcmToken: stillRegisteredTokens
+        })//end update
 
     })//end sendToDevice
   })//end return-then
 });
+
+
+//function to send notification when new match is recieved. 
+exports.notifyNewMatch = functions.database.ref('/matches/{reciepientId}/{newMatchId}').onCreate((snap, context) => {
+  
+  //save data of match
+  const match = snap.val();
+  const matchName = match.name;
+  console.log('matchName is: '+matchName);
+  const toId = context.params.reciepientId;
+  console.log('reciepientId is: '+toId);
+  const messageTxt = 'You matched with '+matchName;
+
+  //fetch fcmToken of reciepient in order to send push notification
+  return admin.database().ref('/users/' + toId + '/fcmToken').once('value').then((fcmToken) => {
+
+    const registrationTokens = fcmToken.val()
+
+    console.log('registrationTokens is: '+registrationTokens);
+
+    //build media match notification
+    const payload = {
+        notification: {
+          body: messageTxt
+        },
+        data: {
+          // SENDER_NAME: senderName,
+          // SENDER_ID: fromId,
+          VIEW: 'messages'
+
+        }//end data
+    }//end payload
+
+    //send message
+    return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
+      const stillRegisteredTokens = registrationTokens;
+
+      response.results.forEach((result, index) => {
+        const error = result.error
+        if (error) {
+            const failedRegistrationToken = registrationTokens[index]
+            console.error('blah', failedRegistrationToken, error)
+            if (error.code === 'messaging/invalid-registration-token'
+                || error.code === 'messaging/registration-token-not-registered') {
+                    const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
+                    if (failedIndex > -1) {
+                        stillRegisteredTokens.splice(failedIndex, 1)
+                    }
+                }
+          }
+        })//end forEach
+
+        return admin.database().ref("users/" + toId).update({
+            fcmToken: stillRegisteredTokens
+        })//end update
+
+    })//end sendToDevice
+  })//end return-then
+});
+
 
 // add in age range/location (in db and function query start and end strings)
 

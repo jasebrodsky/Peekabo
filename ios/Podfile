@@ -8,7 +8,8 @@ target 'Blured' do
     pod 'QBImagePickerController'
 
   # Pods for ReactPushNotifications - Add these lines
-    pod 'Firebase/Core'
+    pod 'Firebase/Core', '~> 5.9.0'
+    pod 'GoogleAppMeasurement', '~> 5.2.0'
     pod 'Firebase/Messaging'
 
   # Pods for NativeStarterKit

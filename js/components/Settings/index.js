@@ -34,6 +34,7 @@ import {
   Thumbnail,
   Toast,
   Right,
+  Switch,
   Body,
   View
 } from "native-base";
@@ -153,7 +154,28 @@ class Settings extends Component {
   async getToken() {
     fcmToken = await RNfirebase.messaging().getToken();
     firebaseRef.update({fcmToken: fcmToken});
-    alert('fcmToken is now: '+fcmToken);
+    // try {
+    //   let fcmToken = await AsyncStorage.getItem('fcmToken');
+    //   if (!fcmToken) {
+    //       fcmToken = await RNfirebase.messaging().getToken();
+    //       if (fcmToken) {
+    //           // user has a device token
+
+    //           // update fcmToken in firebase
+    //           firebaseRef.update({fcmToken: 'fcmToken'});
+
+    //           //set fcmToken to asyncStorage for use later
+    //           await AsyncStorage.setItem('fcmToken', fcmToken);
+    //       }
+    //   }else{
+    //     // update fcmToken in firebase
+    //     firebaseRef.update({fcmToken: 'fcmToken'});
+    //   }     
+    // } catch (error) {
+    //   console.log('error is: '+error);
+    //   firebaseRef.update({fcmToken: fcmToken});
+
+    // }
 
   }
 
@@ -171,17 +193,25 @@ class Settings extends Component {
 
 
   onPressHandle1 = () => {
-     this.setState({ 
-      profile: { ...this.state.profile, notifications_message: !this.state.profile.notifications_message}
-    }); 
-     console.log(this.state);
+
+    //take opposite of current value from state
+    let bool = this.state.profile.notifications_message == true ? false : true;
+
+    //update firebase with new value, then update state
+    firebaseRef.update({notifications_message: bool})
+    .then(this.setState({profile: { ...this.state.profile, notifications_message: bool}}))
+
   }
 
   onPressHandle2 = () => {
-    this.setState({
-      profile: { ...this.state.profile, notifications_match: !this.state.profile.notifications_match}
-    }); 
-     console.log(this.state);
+
+    //take opposite of current value from state
+    let bool = this.state.profile.notifications_match == true ? false : true;
+
+    //update firebase with new value, then update state
+    firebaseRef.update({notifications_match: bool})
+    .then(this.setState({profile: { ...this.state.profile, notifications_match: bool}}))
+
   }
 
   //function to get update users current location. 
@@ -899,21 +929,25 @@ class Settings extends Component {
                 <Text>Notify me when...</Text>
               </ListItem>
               <ListItem>
-                <Text>New message</Text>
+                <Left>
+                  <Text>New message</Text>
+                </Left>
                 <Right>
-                  <Radio 
-                    selected={this.state.profile.notifications_message} 
-                    onPress={this.onPressHandle1}
-                    />
+                  <Switch 
+                    value={this.state.profile.notifications_message}
+                    onValueChange={this.onPressHandle1}
+                   />
                 </Right>
               </ListItem>
               <ListItem>
-                <Text>New match</Text>
+               <Left>
+                  <Text>New match</Text>
+                </Left>
                 <Right>
-                  <Radio 
-                    selected={this.state.profile.notifications_match}
-                    onPress={this.onPressHandle2}
-                  />
+                  <Switch 
+                    value={this.state.profile.notifications_match}
+                    onValueChange={this.onPressHandle2}
+                   />
                 </Right>
               </ListItem>
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>
