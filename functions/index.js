@@ -16,11 +16,13 @@ exports.notifyNewMessage = functions.database.ref('/conversations/{conversationI
   const messageTxt = message ['text'];
 
   //fetch fcmToken of reciepient in order to send push notification
-  return admin.database().ref('/users/' + toId + '/fcmToken').once('value').then((fcmToken) => {
-
-    const registrationTokens = fcmToken.val()
+  return admin.database().ref('/users/' + toId ).once('value').then((snapUser) => {
+    //build media messages notification
+    const sendNotificationMessage = snapUser.val().notifications_message;
+    const registrationTokens = snapUser.val().fcmToken;
 
     console.log('registrationTokens is: '+registrationTokens);
+    console.log('sendNotificationMessage is: '+sendNotificationMessage);
 
     //build media messages notification
     const payload = {
@@ -36,30 +38,33 @@ exports.notifyNewMessage = functions.database.ref('/conversations/{conversationI
         }//end data
     }//end payload
 
-    //send message
-    return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
-      const stillRegisteredTokens = registrationTokens;
+    //send message if user allows notifications for messages
+    if (sendNotificationMessage == true) {
+      return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
+        const stillRegisteredTokens = registrationTokens;
 
-      response.results.forEach((result, index) => {
-        const error = result.error
-        if (error) {
-            const failedRegistrationToken = registrationTokens[index]
-            console.error('blah', failedRegistrationToken, error)
-            if (error.code === 'messaging/invalid-registration-token'
-                || error.code === 'messaging/registration-token-not-registered') {
-                    const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
-                    if (failedIndex > -1) {
-                        stillRegisteredTokens.splice(failedIndex, 1)
-                    }
-                }
-          }
-        })//end forEach
+        response.results.forEach((result, index) => {
+          const error = result.error
+          if (error) {
+              const failedRegistrationToken = registrationTokens[index]
+              console.error('blah', failedRegistrationToken, error)
+              if (error.code === 'messaging/invalid-registration-token'
+                  || error.code === 'messaging/registration-token-not-registered') {
+                      const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
+                      if (failedIndex > -1) {
+                          stillRegisteredTokens.splice(failedIndex, 1)
+                      }
+                  }
+            }
+          })//end forEach
 
-        return admin.database().ref("users/" + toId).update({
-            fcmToken: stillRegisteredTokens
-        })//end update
+          return admin.database().ref("users/" + toId).update({
+              fcmToken: stillRegisteredTokens
+          })//end update
 
-    })//end sendToDevice
+      })//end sendToDevice
+    }
+
   })//end return-then
 });
 
@@ -76,11 +81,13 @@ exports.notifyNewMatch = functions.database.ref('/matches/{reciepientId}/{newMat
   const messageTxt = 'You matched with '+matchName;
 
   //fetch fcmToken of reciepient in order to send push notification
-  return admin.database().ref('/users/' + toId + '/fcmToken').once('value').then((fcmToken) => {
-
-    const registrationTokens = fcmToken.val()
+  return admin.database().ref('/users/' + toId ).once('value').then((snapUser) => {
+    //build media messages notification
+    const sendNotificationMatch = snapUser.val().notifications_match;
+    const registrationTokens = snapUser.val().fcmToken;
 
     console.log('registrationTokens is: '+registrationTokens);
+    console.log('sendNotificationMatch is: '+sendNotificationMatch);
 
     //build media match notification
     const payload = {
@@ -95,30 +102,32 @@ exports.notifyNewMatch = functions.database.ref('/matches/{reciepientId}/{newMat
         }//end data
     }//end payload
 
-    //send message
-    return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
-      const stillRegisteredTokens = registrationTokens;
+    //send message if user allows notifications for matches
+    if (sendNotificationMatch == true) {
+      return admin.messaging().sendToDevice(registrationTokens, payload).then( response => {
+        const stillRegisteredTokens = registrationTokens;
 
-      response.results.forEach((result, index) => {
-        const error = result.error
-        if (error) {
-            const failedRegistrationToken = registrationTokens[index]
-            console.error('blah', failedRegistrationToken, error)
-            if (error.code === 'messaging/invalid-registration-token'
-                || error.code === 'messaging/registration-token-not-registered') {
-                    const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
-                    if (failedIndex > -1) {
-                        stillRegisteredTokens.splice(failedIndex, 1)
-                    }
-                }
-          }
-        })//end forEach
+        response.results.forEach((result, index) => {
+          const error = result.error
+          if (error) {
+              const failedRegistrationToken = registrationTokens[index]
+              console.error('blah', failedRegistrationToken, error)
+              if (error.code === 'messaging/invalid-registration-token'
+                  || error.code === 'messaging/registration-token-not-registered') {
+                      const failedIndex = stillRegisteredTokens.indexOf(failedRegistrationToken)
+                      if (failedIndex > -1) {
+                          stillRegisteredTokens.splice(failedIndex, 1)
+                      }
+                  }
+            }
+          })//end forEach
 
-        return admin.database().ref("users/" + toId).update({
-            fcmToken: stillRegisteredTokens
-        })//end update
+          return admin.database().ref("users/" + toId).update({
+              fcmToken: stillRegisteredTokens
+          })//end update
+      })//end sendToDevice
 
-    })//end sendToDevice
+    }
   })//end return-then
 });
 
