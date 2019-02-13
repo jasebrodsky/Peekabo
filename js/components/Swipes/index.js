@@ -309,7 +309,7 @@ class Swipes extends Component {
   }
 
   //Share function when sharing referral code native share functionality. 
-  onShare = () => {
+  onShare = (userId) => {
 
     //fetch from getCode cloud function
     fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+userId)
