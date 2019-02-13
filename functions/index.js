@@ -9,6 +9,7 @@ admin.initializeApp();
 //get referral codes
 exports.getCode = functions.https.onRequest((req, res) => {
     const userid = req.query.userid;
+    console.log('userid is: '+userid);
     let number = '';
 
     //query for last code in db 
@@ -21,6 +22,8 @@ exports.getCode = functions.https.onRequest((req, res) => {
 
         var words = ['CHOSEN','RESPECT','LOVE','CONNECT']
         var word = words[Math.floor(Math.random()*words.length)];
+
+        console.log('userid inside codesnap is: '+userid);
 
         //create newCode object
         var newCode = {

@@ -309,10 +309,11 @@ class Swipes extends Component {
   }
 
   //Share function when sharing referral code native share functionality. 
-  onShare = (userId) => {
+  onShare = () => {
 
+    alert(this.state.userId);
     //fetch from getCode cloud function
-    fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+userId)
+    fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+this.state.userId)
     .then((response) => response.json())
     .then((responseJson) => {
                
@@ -321,7 +322,7 @@ class Swipes extends Component {
 
         //prompt native share functionality 
         Share.share({
-          message: 'I think you\'ll like Helm. It\'s a different type of dating where only men invited by women can join. You\' need this code to enter: '+code,
+          message: 'I think you\'ll like Helm. It\'s a different type of dating where only men invited by women can join. You\'ll need this code to enter: '+code,
           url: 'https://itunes.apple.com/us/app/hinge/id595287172',
           title: 'Wow, did you see that?'
         })
