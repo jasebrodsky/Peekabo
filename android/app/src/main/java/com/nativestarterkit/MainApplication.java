@@ -3,6 +3,8 @@ package com.nativestarterkit;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.RNFetchBlob.RNFetchBlobPackage;
+import com.reactlibrary.googlesignin.RNGoogleSignInPackage;
 import io.invertase.firebase.RNFirebasePackage;
 import com.facebook.reactnative.androidsdk.FBSDKPackage;
 import com.reactnative.ivpusic.imagepicker.PickerPackage;
@@ -36,6 +38,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNFetchBlobPackage(),
+            new RNGoogleSignInPackage(),
             new RNFirebasePackage(),
             new FBSDKPackage(),
             new PickerPackage(),

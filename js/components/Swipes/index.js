@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity,Modal,ScrollView,StyleSheet,Text,View,TouchableWithoutFeedback } from 'react-native'
+import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity,Modal,ScrollView,StyleSheet,Share,Text,View,TouchableWithoutFeedback } from 'react-native'
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -306,11 +306,31 @@ class Swipes extends Component {
          this.pushNewMatch(imagesObj, name_match, userid, userid_match, about_match);
       }
 
-      //queue notification that new match is available in 30 seconds
-
-      //send push notification to other user
   }
 
+  //Share function when sharing referral code native share functionality. 
+  onShare = () => {
+
+    //fetch from getCode cloud function
+    fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+userId)
+    .then((response) => response.json())
+    .then((responseJson) => {
+               
+        //save code var.
+        let code = responseJson.sharable_code;
+
+        //prompt native share functionality 
+        Share.share({
+          message: 'I think you\'ll like Helm. It\'s a different type of dating where only men invited by women can join. You\' need this code to enter: '+code,
+          url: 'https://itunes.apple.com/us/app/hinge/id595287172',
+          title: 'Wow, did you see that?'
+        })
+    
+    })
+    .catch(function(error) {
+        alert("Data could not be saved." + error);
+    });
+  };
 
   //Function to save new swipe object
   calculateAge (dateString) {// birthday is a date
@@ -439,7 +459,16 @@ class Swipes extends Component {
         <View style={{ marginTop: -50}}>
 
          <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: width/6, top: height/2}}>
-          {(this.state.isEmpty || this.state.allSwiped) && <Text> Come back tomorrow for more matches :) </Text>}
+          {(this.state.isEmpty || this.state.allSwiped) && 
+            <View>
+              <Text> Come back tomorrow for more matches.</Text>
+              <Text>Please help us grow by sharing with friends</Text>
+              <View style ={{marginTop: 20}}>
+                <Button onPress={this.onShare} rounded block bordered>
+                  <Text>Invite friend</Text>
+                </Button>
+              </View>
+            </View>}
         </View>
 
         <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: width/2, top: height/2}}>

@@ -140,7 +140,7 @@ class Messages extends Component {
     const { state, navigate } = this.props.navigation;
 
      userId = firebase.auth().currentUser.uid;
-     firebaseRef = firebase.database().ref('/matches/'+userId+'/').orderByChild('last_message_date');
+     firebaseRef = firebase.database().ref('/matches/'+userId+'/').orderByChild('last_message_date').limitToFirst(50);
 
       var convos = [];
       //put message data into state in appropriate format

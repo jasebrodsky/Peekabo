@@ -5,6 +5,42 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
+
+//get referral codes
+exports.getCode = functions.https.onRequest((req, res) => {
+    const userid = req.query.userid;
+    let number = '';
+
+    //query for last code in db 
+    admin.database().ref('/codes').limitToLast(1).once('value').then(codeSnap => {
+        
+        //convert codeSnap into array on it's value
+        let codeObj = Object.values(codeSnap.toJSON());
+        number = codeObj[0].number;
+        let newNumber = number+1;
+
+        var words = ['CHOSEN','RESPECT','LOVE','CONNECT']
+        var word = words[Math.floor(Math.random()*words.length)];
+
+        //create newCode object
+        var newCode = {
+          created: new Date(),
+          created_by: userid,
+          expired: "false",
+          number: newNumber,
+          redeemed_by: false,
+          sharable_code: word+"@"+newNumber,
+        };
+
+        //push newCode into database
+        admin.database().ref('/codes').push(newCode).then(key => {
+          return res.status(200).send(newCode);
+        })
+        .catch(error => console.log(error));
+    })  
+  })
+
+
 //function to send notification when message is recieved. 
 exports.notifyNewMessage = functions.database.ref('/conversations/{conversationId}/messages/{messageId}').onCreate((snap, context) => {
   

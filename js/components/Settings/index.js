@@ -760,26 +760,26 @@ class Settings extends Component {
 
               <Item 
                 fixedLabel
-                    onPress={()=> ActionSheet.show
-                      (
-                        {
-                          options: GENDER_OPTIONS,
-                          cancelButtonIndex: CANCEL_INDEX,
-                          destructiveButtonIndex: DESTRUCTIVE_INDEX,
-                          title: 'Gender'
-                        },
-                        (buttonIndex) => {
-                          if ((buttonIndex) === 2) {
-                               console.log(GENDER_OPTIONS[buttonIndex])
-                            } else {
-                              this.setState({
-                                profile: { ...this.state.profile, gender: GENDER_OPTIONS[buttonIndex]}
-                              }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref() });
-                            }
+                onPress={()=> ActionSheet.show
+                  (
+                    {
+                      options: GENDER_OPTIONS,
+                      cancelButtonIndex: CANCEL_INDEX,
+                      destructiveButtonIndex: DESTRUCTIVE_INDEX,
+                      title: 'Gender'
+                    },
+                    (buttonIndex) => {
+                      if ((buttonIndex) === 2) {
+                           console.log(GENDER_OPTIONS[buttonIndex])
+                        } else {
+                          this.setState({
+                            profile: { ...this.state.profile, gender: GENDER_OPTIONS[buttonIndex]}
+                          }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref() });
                         }
-                      )
-                    }                
-                  >
+                    }
+                  )
+                }                
+              >
                 <Label>Gender</Label>
                 <Input
                   disabled

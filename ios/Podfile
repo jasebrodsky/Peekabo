@@ -3,14 +3,14 @@
 
 target 'Blured' do
   # Uncomment the next line if you're using Swift or would like to use dynamic frameworks
-   use_frameworks!
+   # use_frameworks!
     pod 'RSKImageCropper'
     pod 'QBImagePickerController'
 
   # Pods for ReactPushNotifications - Add these lines
-    pod 'Firebase/Core', '~> 5.9.0'
+    pod 'Firebase/Core', :modular_headers => true
     pod 'GoogleAppMeasurement', '~> 5.2.0'
-    pod 'Firebase/Messaging'
+    pod 'Firebase/Messaging', :modular_headers => true
 
   # Pods for NativeStarterKit
 
