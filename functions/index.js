@@ -15,28 +15,31 @@ exports.getCode = functions.https.onRequest((req, res) => {
     //query for last code in db 
     admin.database().ref('/codes').limitToLast(1).once('value').then(codeSnap => {
         
-        //convert codeSnap into array on it's value
+        //convert codeSnap into it's data 
         let codeObj = Object.values(codeSnap.toJSON());
+        //let codeId = Object.keys(codeSnap.toJSON())[0];
         number = codeObj[0].number;
         let newNumber = number+1;
 
         var words = ['CHOSEN','RESPECT','LOVE','CONNECT']
         var word = words[Math.floor(Math.random()*words.length)];
 
-        console.log('userid inside codesnap is: '+userid);
-
         //create newCode object
         var newCode = {
+          //code_id: codeId,
           created: new Date(),
           created_by: userid,
           expired: "false",
           number: newNumber,
           redeemed_by: false,
-          sharable_code: word+"@"+newNumber,
+          sharable_code: word+"@"+newNumber
+
         };
 
         //push newCode into database
-        admin.database().ref('/codes').push(newCode).then(key => {
+        admin.database().ref('/codes').push(newCode).then(newCodeSnap => {
+          console.log('newCodeSnap.key is: '+newCodeSnap.key);
+          newCode.code_id = newCodeSnap.key;
           return res.status(200).send(newCode);
         })
         .catch(error => console.log(error));

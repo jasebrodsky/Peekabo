@@ -311,7 +311,6 @@ class Swipes extends Component {
   //Share function when sharing referral code native share functionality. 
   onShare = () => {
 
-    alert(this.state.userId);
     //fetch from getCode cloud function
     fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+this.state.userId)
     .then((response) => response.json())
@@ -319,14 +318,23 @@ class Swipes extends Component {
                
         //save code var.
         let code = responseJson.sharable_code;
+        let codeDelete = responseJson.code_id;
 
         //prompt native share functionality 
         Share.share({
-          message: 'I think you\'ll like Helm. It\'s a different type of dating where only men invited by women can join. You\'ll need this code to enter: '+code,
+          message: 'I think you\'ll love Helm. It\'s a different type of dating where only men invited by women can join. You\'ll need this code to enter: '+code,
           url: 'https://itunes.apple.com/us/app/hinge/id595287172',
-          title: 'Wow, did you see that?'
+          title: 'Wow, have you seen this yet?'
+        }).then(({action, activityType}) => {
+          if(action === Share.dismissedAction) {
+            //delete unsent code from db
+            firebase.database().ref('codes/' + codeDelete).remove();
+
+          } 
+          else {
+            console.log('Share successful');
+          }
         })
-    
     })
     .catch(function(error) {
         alert("Data could not be saved." + error);
