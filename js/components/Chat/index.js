@@ -9,6 +9,7 @@ import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import DrawBar from "../DrawBar";
+import FontAwesome, { Icons } from 'react-native-fontawesome';
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import {
   ActionSheet,

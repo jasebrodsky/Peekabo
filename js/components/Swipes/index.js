@@ -9,6 +9,7 @@ import Overlay from 'react-native-modal-overlay';
 import ProgressCircle from 'react-native-progress-circle';
 import Swiper from 'react-native-deck-swiper';
 import TimerMixin from 'react-timer-mixin';
+import FontAwesome, { Icons } from 'react-native-fontawesome';
 
 import {
   Badge,
@@ -448,11 +449,11 @@ class Swipes extends Component {
           <Header>
             <Left>
               <Button transparent onPress={() => this.enableNavigation('Settings') }>
-                <Icon name="ios-settings-outline" />
+               <FontAwesome style={{fontSize: 32}}>{Icons.cog}</FontAwesome>
               </Button>
             </Left>
             <Body>
-                <Icon onPress={() => this.showModal()} name="ios-flame-outline" />
+              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
             </Body>
             <Right>
               <Button transparent onPress={() => this.enableNavigation('Messages') }>
@@ -461,7 +462,7 @@ class Swipes extends Component {
                     <Text>{this.state.unreadChatCount}</Text>
                   </Badge>
                 }
-                <Icon name="ios-chatboxes-outline" />
+              <FontAwesome style={{fontSize: 32}}>{Icons.comments}</FontAwesome>
               </Button>
             </Right>
           </Header>

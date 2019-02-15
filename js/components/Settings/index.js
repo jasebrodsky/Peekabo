@@ -11,6 +11,7 @@ import ImageViewer from 'react-native-image-zoom-viewer';
 import Geocoder from 'react-native-geocoding';
 import RNFetchBlob from 'rn-fetch-blob';
 import * as firebase from "firebase";
+import FontAwesome, { Icons } from 'react-native-fontawesome';
 
 import {
   ActionSheet,
@@ -695,11 +696,11 @@ class Settings extends Component {
           <Left >
           </Left>
           <Body style={{ flex: 1,  justifyContent: 'center', alignItems: 'center' }}>
-              <Icon  name="ios-settings-outline" />
+              <FontAwesome style={{fontSize: 32}}>{Icons.cog}</FontAwesome>
           </Body>
           <Right >
             <Button transparent onPress={() => this.validateSettings()}>
-              <Icon name="ios-flame-outline" />
+              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
             </Button>
           </Right>
         </Header>

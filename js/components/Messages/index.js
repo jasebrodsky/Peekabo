@@ -4,6 +4,7 @@ import {Dimensions, ActivityIndicator, ScrollView, ListView } from 'react-native
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
+import FontAwesome, { Icons } from 'react-native-fontawesome';
 import {
   Card,
   CardItem,
@@ -218,11 +219,11 @@ class Messages extends Component {
         <Header>
           <Left>
             <Button transparent onPress={() => navigate("Swipes")}>
-              <Icon name="ios-flame-outline" />
+              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
             </Button>
           </Left>
           <Body>
-            <Icon name="ios-chatboxes-outline" />
+            <FontAwesome style={{fontSize: 32}}>{Icons.comments}</FontAwesome>
           </Body>
           <Right>
           </Right>

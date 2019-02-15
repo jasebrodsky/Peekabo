@@ -3,6 +3,7 @@ import { ImageBackground } from "react-native";
 import { connect } from "react-redux";
 import * as firebase from "firebase";
 import Geocoder from 'react-native-geocoding';
+import FontAwesome, { Icons } from 'react-native-fontawesome';
 import {
   Container,
   Content,
@@ -197,6 +198,7 @@ onLoginOrRegister = () => {
             //will trigger the onAuthStateChanged listener and redirect to swipes
             
             navigate("Swipes");
+            //navigate("Intro");
 
         }else{
         
@@ -316,17 +318,13 @@ onLoginOrRegister = () => {
 
             <ImageBackground source={background} style={styles.shadow}>
               <View>
-
-              <Icon type="FontAwesome" name="heart" 
-                style=
+                <FontAwesome style=
                   {{position: 'absolute', 
                   marginTop: 20,             
                   alignSelf: 'center',
                   fontSize: 100, 
                   color: 'white',
-                }} />
-
-
+                }}>{Icons.heart}</FontAwesome>
 
                 <Text 
                   style={{
