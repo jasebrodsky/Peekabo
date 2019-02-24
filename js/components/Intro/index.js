@@ -53,7 +53,7 @@ const slidesFemale = [
   {
     key: '1',
     title: 'Welcome to Helm for WOMEN',
-    text: 'Dating for the modern women',
+    text: 'Dating for the modern people',
     image: require('./assets/meeting-3546377_960_720.png'),
     imageStyle: styles.image,
     backgroundColor: '#59b2ab',
@@ -88,7 +88,7 @@ const slidesMale = [
   {
     key: '1',
     title: 'Welcome to Helm',
-    text: 'Dating for the modern women',
+    text: 'Dating for the modern people',
     image: require('./assets/meeting-3546377_960_720.png'),
     imageStyle: styles.image,
     backgroundColor: '#59b2ab',
@@ -174,8 +174,8 @@ class Intro extends Component {
 
         //prompt native share functionality 
         Share.share({
-          message: 'I think you\'ll love Helm. It\'s a different type of dating where only men invited by women can join. You\'ll need this code to enter: '+code,
-          url: 'https://helmdating.com/index_men.html',
+          message: 'You gotta check out Helm. It\'s a dating app where only men invited by women can join. You\'ll need this code to enter: '+code,
+          url: 'https://helmdating.com/invited.html',
           title: 'Wow, have you seen this yet?'
         }).then(({action, activityType}) => {
           if(action === Share.dismissedAction) {

@@ -197,8 +197,8 @@ onLoginOrRegister = () => {
             this.getLocation(userId);
             //will trigger the onAuthStateChanged listener and redirect to swipes
             
-            navigate("Swipes");
-            //navigate("Intro");
+            //navigate("Swipes");
+            navigate("Intro");
 
         }else{
         
