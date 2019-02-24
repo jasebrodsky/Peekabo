@@ -34,7 +34,6 @@ import {
 import { openDrawer } from "../../actions/drawer";
 import { GiftedChat } from 'react-native-gifted-chat';
 import TimerCountdown from 'react-native-timer-countdown'
-import Overlay from 'react-native-modal-overlay';
 
 var BUTTONS = ["Unmatch", "Report & Block", "Cancel"];
 var DESTRUCTIVE_INDEX = 2;
@@ -251,13 +250,6 @@ class Chat extends Component {
     }
   }
 
-
-  
-  //need to figure out how to set timeLeft to null when use leaves chat view, so that chat doesnt expire at modal is shown. 
-  closeModal() {
-    const { navigate } = this.props.navigation;
-    this.setState({chatActive:true}), navigate("Swipes");
-  }
 
   goBack() {
     const { navigate } = this.props.navigation;

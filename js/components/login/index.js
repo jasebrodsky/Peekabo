@@ -269,7 +269,7 @@ onLoginOrRegister = () => {
                       console.log("Data could not be saved." + error);
                     } else {
                       console.log("Data saved successfully.");
-                      navigate("Settings");
+                      navigate("Intro");
                     }
                   });
 

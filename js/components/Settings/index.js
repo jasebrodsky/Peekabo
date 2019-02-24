@@ -121,7 +121,7 @@ class Settings extends Component {
       //update sate with value from dataSnapShot. 
       this.setState({
         profile: dataSnapshot.val()
-      }) 
+      });
     })
 
     this.getLocation()
@@ -265,7 +265,11 @@ class Settings extends Component {
                 duration: 3000
               })
       }else{
-        navigate("Swipes");
+        //navigate.goBack();
+        this.props.navigation.navigate('Swipes');
+
+
+
       }
     }
 
@@ -338,92 +342,102 @@ class Settings extends Component {
 // 3. REFLECT: when images in db changes, update component state
 
   pickImage() {
-    ImagePicker.openPicker({
-      compressImageQuality: 0.2,
-      multiple: false,
-      forceJpg: true,
-      cropping: true,
-      width: 600,
-      height: 800,
-      showCropGuidelines: true,
-      mediaType: 'photo',
-      includeBase64: true,
-      waitAnimationEnd: false,
-      includeExif: true,
-    }).then(image => {
 
-        console.log('image is: '+JSON.stringify(image));
-        // Create a root reference
-        
-        var storageRef = firebase.storage().ref(); 
+    let imagesLength = Object.keys(this.state.profile.images).length;
+    console.log('images length is: '+imagesLength);
 
-        //create reference to userid from state
-        let userid = this.state.userid;
+    if(imagesLength < 5){
+      ImagePicker.openPicker({
+        compressImageQuality: 0.2,
+        multiple: false,
+        forceJpg: true,
+        cropping: true,
+        width: 600,
+        height: 800,
+        showCropGuidelines: true,
+        mediaType: 'photo',
+        includeBase64: true,
+        waitAnimationEnd: false,
+        includeExif: true,
+      }).then(image => {
 
-        //count existing images in state and save to var
-        // HANDLE WHEN IMAGES ARE EMPTY.. if var == null, var = 0
-        var exisiting_images_count = this.state.profile.images.length;
+          console.log('image is: '+JSON.stringify(image));
+          // Create a root reference
           
-          //var image_item_count_start = i+exisiting_images_count;
-          var image_item_count_start = exisiting_images_count++;
-          console.log('image_item_count_start: '+image_item_count_start);
+          var storageRef = firebase.storage().ref(); 
 
-          // Create a reference to 'images/userid/i.jpg'
-          var imagesRef = storageRef.child('images/'+userId+'/'+image_item_count_start+'.jpg');
-          
-          // save reference to where to save the new URI 
-          var imagesObjRef = firebase.database().ref('/users/'+userId+'/images/');
-          
-          // Push exisiting images into imagesObj
-          var imagesObj = this.state.profile.images;
+          //create reference to userid from state
+          let userid = this.state.userid;
 
-          //set up properties for image
-          let imagePath = image.path;
-          let Blob = RNFetchBlob.polyfill.Blob
-          let fs = RNFetchBlob.fs
-          window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
-          window.Blob = Blob
-          let mime = 'image/jpg'
-          let uploadUri = Platform.OS === 'ios' ? imagePath.replace('file://', '') : imagePath
-          
-          //read selected image and build blob          
-          fs.readFile(imagePath, 'base64')
-            .then((data) => {
-              //console.log(data);
-              return Blob.build(data, { type: `${mime};BASE64` })
-          })
-          //then upload blob to firebase storage
-          .then((blob) => {
-              uploadBlob = blob
-              return imagesRef.put(blob, { contentType: mime })
+          //count existing images in state and save to var
+          // HANDLE WHEN IMAGES ARE EMPTY.. if var == null, var = 0
+          var exisiting_images_count = Object.keys(this.state.profile.images).length;
+            
+            //var image_item_count_start = i+exisiting_images_count;
+            var image_item_count_start = exisiting_images_count++;
+            console.log('image_item_count_start: '+image_item_count_start);
+
+            // Create a reference to 'images/userid/i.jpg'
+            var imagesRef = storageRef.child('images/'+userId+'/'+image_item_count_start+'.jpg');
+            
+            // save reference to where to save the new URI 
+            var imagesObjRef = firebase.database().ref('/users/'+userId+'/images/');
+            
+            // Push exisiting images into imagesObj
+            var imagesObj = this.state.profile.images;
+
+            //set up properties for image
+            let imagePath = image.path;
+            let Blob = RNFetchBlob.polyfill.Blob
+            let fs = RNFetchBlob.fs
+            window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
+            window.Blob = Blob
+            let mime = 'image/jpg'
+            let uploadUri = Platform.OS === 'ios' ? imagePath.replace('file://', '') : imagePath
+            
+            //read selected image and build blob          
+            fs.readFile(imagePath, 'base64')
+              .then((data) => {
+                //console.log(data);
+                return Blob.build(data, { type: `${mime};BASE64` })
             })
-          //then return url of new file from storage
-          .then(() => {
-            uploadBlob.close();
-            return imagesRef.getDownloadURL()
-          })
-          //then update all image references for user in multi-path update
-          .then((url) => {
+            //then upload blob to firebase storage
+            .then((blob) => {
+                uploadBlob = blob
+                return imagesRef.put(blob, { contentType: mime })
+              })
+            //then return url of new file from storage
+            .then(() => {
+              uploadBlob.close();
+              return imagesRef.getDownloadURL()
+            })
+            //then update all image references for user in multi-path update
+            .then((url) => {
 
-            //count existing images in state
-            var exisiting_images_count_upload = this.state.profile.images.length;
+              //count existing images in state
+              var exisiting_images_count_upload = this.state.profile.images.length;
 
-            //+1 to the exisiting count of images
-            var image_item_count_start_upload = exisiting_images_count_upload++;
+              //+1 to the exisiting count of images
+              var image_item_count_start_upload = exisiting_images_count_upload++;
 
-            // push new image object into imagesObj 
-            imagesObj.push({url: url, file: image_item_count_start_upload});
-            console.log('imagesObj: '+JSON.stringify(imagesObj));
+              // push new image object into imagesObj 
+              imagesObj.push({url: url, file: image_item_count_start_upload});
+              console.log('imagesObj: '+JSON.stringify(imagesObj));
 
-            //call updateData function with new URI's to pass in multi-path update
-            // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
-           this.updateData('images', userId, imagesObj );
-          
-          })
-          .catch(console.error);                  
-      } 
-    ).catch(e => console.log(e));
+              //call updateData function with new URI's to pass in multi-path update
+              // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
+             this.updateData('images', userId, imagesObj );
+            
+            })
+            .catch(console.error);                  
+        } 
+      ).catch(e => console.log(e));
+    }else{
+      alert('Please delete a photo first.');
+    }
+
   }
+
 
   //funtion to scale height of image
   scaledHeight(oldW, oldH, newW) {
@@ -696,11 +710,11 @@ class Settings extends Component {
           <Left >
           </Left>
           <Body style={{ flex: 1,  justifyContent: 'center', alignItems: 'center' }}>
-              <FontAwesome style={{fontSize: 32}}>{Icons.cog}</FontAwesome>
+              <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.cog}</FontAwesome>
           </Body>
           <Right >
             <Button transparent onPress={() => this.validateSettings()}>
-              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
+              <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.users}</FontAwesome>
             </Button>
           </Right>
         </Header>

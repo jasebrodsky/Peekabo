@@ -219,11 +219,11 @@ class Messages extends Component {
         <Header>
           <Left>
             <Button transparent onPress={() => navigate("Swipes")}>
-              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
+              <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.users}</FontAwesome>
             </Button>
           </Left>
           <Body>
-            <FontAwesome style={{fontSize: 32}}>{Icons.comments}</FontAwesome>
+            <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.comments}</FontAwesome>
           </Body>
           <Right>
           </Right>

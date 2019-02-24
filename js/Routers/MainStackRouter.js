@@ -9,7 +9,7 @@ import Chat from "../components/Chat";
 import Swipes from "../components/Swipes";
 import Settings from "../components/Settings";
 import HomeDrawerRouter from "./HomeDrawerRouter";
-import { StackNavigator } from "react-navigation";
+import { StackNavigator, NavigationActions } from "react-navigation";
 import { Header, Left, Button, Icon, Body, Title, Right } from "native-base";
 HomeDrawerRouter.navigationOptions = ({ navigation }) => ({
   header: null

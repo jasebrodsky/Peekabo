@@ -449,20 +449,22 @@ class Swipes extends Component {
           <Header>
             <Left>
               <Button transparent onPress={() => this.enableNavigation('Settings') }>
-               <FontAwesome style={{fontSize: 32}}>{Icons.cog}</FontAwesome>
+               <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.cog}</FontAwesome>
               </Button>
             </Left>
             <Body>
-              <FontAwesome style={{fontSize: 32}}>{Icons.users}</FontAwesome>
+              <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.users}</FontAwesome>
             </Body>
             <Right>
               <Button transparent onPress={() => this.enableNavigation('Messages') }>
+
+               <FontAwesome style={{fontSize: 32, color: '#B2B2FF'}}>{Icons.comments}</FontAwesome>
+      
                 { this.state.showChatCount && 
                   <Badge style={{ position: 'absolute', left: 25 }}>
                     <Text>{this.state.unreadChatCount}</Text>
                   </Badge>
                 }
-              <FontAwesome style={{fontSize: 32}}>{Icons.comments}</FontAwesome>
               </Button>
             </Right>
           </Header>

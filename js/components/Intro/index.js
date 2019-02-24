@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, AlertIOS, Share } from 'react-native';
 import DrawBar from "../DrawBar";
-//import Icon from 'react-native-ionicons'
-//import { LinearGradient } from 'expo';
 import FontAwesome, { Icons } from 'react-native-fontawesome';
 import AppIntroSlider from 'react-native-app-intro-slider';
 import * as firebase from "firebase";
@@ -34,36 +32,92 @@ const styles = StyleSheet.create({
   image: {
     width: 320,
     height: 320,
+  },
+  text: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'transparent',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  title: {
+    fontSize: 22,
+    color: 'white',
+    backgroundColor: 'transparent',
+    textAlign: 'center',
+    marginBottom: 16,
   }
 });
 
-const slides = [
+//create slides female and male
+const slidesFemale = [
   {
-    key: 'somethun',
-    title: 'Quick setup, good defaults',
-    text: 'React-native-app-intro-slider is easy to setup with a small footprint and no dependencies. And it comes with good default layouts!',
-    icon: 'ios-images-outline',
-    colors: ['#63E2FF', '#B066FE'],
+    key: '1',
+    title: 'Welcome to Helm for WOMEN',
+    text: 'Dating for the modern women',
+    image: require('./assets/meeting-3546377_960_720.png'),
+    imageStyle: styles.image,
+    backgroundColor: '#59b2ab',
   },
   {
-    key: 'somethun1',
-    title: 'Super customizable',
-    text: 'The component is also super customizable, so you can adapt it to cover your needs and wants.',
-    icon: 'ios-options-outline',
-    colors: ['#A3A1FF', '#3A3897'],
+    key: '2',
+    title: 'Better conversations',
+    text: 'With each message photos will unblur',
+    image: require('./assets/talk.fw--300x247.png'),
+    imageStyle: styles.image,
+    backgroundColor: '#febe29',
   },
   {
-    key: 'somethun2',
-    title: 'No need to buy me beer',
-    text: 'Usage is all free',
-    icon: 'ios-beer-outline',
-    colors: ['#29ABE2', '#4F00BC'],
-  },
+    key: '3',
+    title: 'Only gentlemen',
+    text: 'Men need to be invited by a female',
+    image: require('./assets/fashion-business-men-transparent-background-cartoon-elegant-characters-isolated-vector-illustration-96857671.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#22bcb5',
+  },  
+  {
+    key: '4',
+    title: 'Invite a gentelmen',
+    text: 'Refer a great guy with the community.',
+    image: require('./assets/handsome-man-png-hd-it-is-not-everyday-that-a-stranger-makes-you-write-handsome-guy-png-670.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#22bcb5',
+  }
 ];
 
-
-
-
+const slidesMale = [
+  {
+    key: '1',
+    title: 'Welcome to Helm',
+    text: 'Dating for the modern women',
+    image: require('./assets/meeting-3546377_960_720.png'),
+    imageStyle: styles.image,
+    backgroundColor: '#59b2ab',
+  },
+  {
+    key: '2',
+    title: 'Better conversations',
+    text: 'With each message photos will unblur',
+    image: require('./assets/talk.fw--300x247.png'),
+    imageStyle: styles.image,
+    backgroundColor: '#febe29',
+  },
+  {
+    key: '3',
+    title: 'Only gentlemen',
+    text: 'Men need to be invited by a female',
+    image: require('./assets/fashion-business-men-transparent-background-cartoon-elegant-characters-isolated-vector-illustration-96857671.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#22bcb5',
+  },  
+  {
+    key: '4',
+    title: 'Enter your code',
+    text: 'In order to join the community.',
+    image: require('./assets/handsome-man-png-hd-it-is-not-everyday-that-a-stranger-makes-you-write-handsome-guy-png-670.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#22bcb5',
+  }
+];
 
 class Intro extends Component {
 
@@ -72,7 +126,8 @@ class Intro extends Component {
 
     //set state to convos var
     this.state = {
-      loading: true
+      loading: true,
+      gender: 'Male',
     }
 
   }
@@ -90,46 +145,155 @@ class Intro extends Component {
   
 
   componentWillMount() {
-    const { state, navigate } = this.props.navigation;
-     //userId = firebase.auth().currentUser.uid;
-     //firebaseRef = firebase.database().ref('/matches/'+userId+'/').orderByChild('last_message_date').limitToFirst(50);
+
+    const userId = firebase.auth().currentUser.uid;
+
+    //query for logged in users information needed and set state with it.     
+    firebase.database().ref('/users/' + userId).once('value', ((userSnap) => {
+                
+      //set state with user data. 
+      this.setState({ 
+        userId: userId,
+        gender: userSnap.val().gender,
+      });
+    }))
   }
+
+
+  //Share function when sharing referral code native share functionality. 
+  _onShare = () => {
+
+    //fetch from getCode cloud function
+    fetch('https://us-central1-blurred-195721.cloudfunctions.net/getCode?userid='+this.state.userId)
+    .then((response) => response.json())
+    .then((responseJson) => {
+               
+        //save code var.
+        let code = responseJson.sharable_code;
+        let codeDelete = responseJson.code_id;
+
+        //prompt native share functionality 
+        Share.share({
+          message: 'I think you\'ll love Helm. It\'s a different type of dating where only men invited by women can join. You\'ll need this code to enter: '+code,
+          url: 'https://helmdating.com/index_men.html',
+          title: 'Wow, have you seen this yet?'
+        }).then(({action, activityType}) => {
+          if(action === Share.dismissedAction) {
+            //delete unsent code from db
+            firebase.database().ref('codes/' + codeDelete).remove();
+
+            //redirect to settings component
+            const { navigate } = this.props.navigation;
+            navigate("Settings");
+
+          } 
+          else {
+            console.log('Share successful');
+            //redirect to settings component
+            const { navigate } = this.props.navigation;
+            navigate("Settings");
+
+          }
+        })
+    })
+    .catch(function(error) {
+        alert("Data could not be saved." + error);
+    });
+  };
+
   
+  //check code is valid
+  _checkCode = (userCode) => {
 
-  _renderNextButton = () => {
-    return (
-      <View style={styles.buttonCircle}>
-        <Icon
-          name="md-arrow-round-forward"
-          color="rgba(255, 255, 255, .9)"
-          size={24}
-          style={{ backgroundColor: 'transparent' }}
-        />
-      </View>
-    );
+    //call firebase if code exists and is not expired
+    firebase.database().ref("/codes").orderByChild("sharable_code").equalTo(userCode).once("value",codeSnap => {
+        //check if code exists
+        if (codeSnap.exists()){
+
+          //get save code to obj
+          let code = codeSnap.val();
+          let key = Object.keys(code);
+          let codeData = code[key];
+          let expired = codeData.expired;
+                
+          //check if code is also expired
+          if(expired == true){
+
+            //handle that code is expired. 
+            console.log('sorry code is expired already. Ask your friend for another.');
+            AlertIOS.alert('Whoops!','Code: '+userCode+' has already been used. Please ask your friend for another.');
+          }else{
+            const { navigate } = this.props.navigation;
+   
+            //code must exist AND code not expired
+            console.log('code exists and is valid!');
+            //update code to expired at the specific code key and redirect to settings
+            firebase.database().ref('/codes/'+key).update({expired_date: new Date().getTime(), expired: true});
+            
+            //alert welcome message, then navigate to settings. 
+            AlertIOS.alert(
+              'Welcome to Helm!',
+              'Click ok to enter community.',
+              [
+                {
+                  text: 'Ok',
+                  onPress: () => navigate("Settings"),
+                },
+              ],
+            );
+            
+
+          }
+        //code doesnt exist
+        }else{
+          //handle that code doesnt exist. 
+          console.log('sorry code doesnt exist. ask your friend for another');
+          AlertIOS.alert('Whoops!','Code: '+userCode+' does not exist. Please ask your friend for another.');
+
+        }
+    });
   }
-  _renderDoneButton = () => {
-    return (
-      <View style={styles.buttonCircle}>
-        <Icon
-          name="md-checkmark"
-          color="rgba(255, 255, 255, .9)"
-          size={24}
-          style={{ backgroundColor: 'transparent' }}
-        />
-      </View>
-    );
+
+  _onDone = () => {
+    const { navigate } = this.props.navigation;
+    //navigate("Settings");
+
+    //if gender is male then render redeem code flow. 
+    if (this.state.gender == 'male'){
+
+      AlertIOS.prompt(
+        'Enter code',
+        'Enter your referral code you received from a friend',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => console.log('Cancel Pressed'),
+            style: 'cancel',
+          },
+          {
+            text: 'Submit',
+            onPress: (code) => this._checkCode(code),
+          },
+        ],
+        'plain-text',
+      );
+
+    }else{
+      //user must be female, render invite friend flow
+      this._onShare();
+    }
   }
-
-
 
   render() {
-    return (
-      <AppIntroSlider
-        slides={slides}
-        renderDoneButton={this._renderDoneButton}
-        renderNextButton={this._renderNextButton}/>
-      );
+    const { navigate } = this.props.navigation;
+    const slides = (this.state.gender == 'male') ? slidesMale : slidesFemale;      
+    const doneLabel = (this.state.gender == 'male') ? 'Enter code' : 'Invite and continue';      
+
+    return <AppIntroSlider 
+      slides={slides} 
+      doneLabel={doneLabel}
+      bottomButton = {true}
+      onDone={this._onDone}/>;
   }
 }
 

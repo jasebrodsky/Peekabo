@@ -29,7 +29,7 @@ exports.getCode = functions.https.onRequest((req, res) => {
           //code_id: codeId,
           created: new Date(),
           created_by: userid,
-          expired: "false",
+          expired: false,
           number: newNumber,
           redeemed_by: false,
           sharable_code: word+"@"+newNumber
