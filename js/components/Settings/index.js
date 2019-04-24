@@ -29,6 +29,7 @@ import {
   Item,
   Input,
   Label,
+  Picker,
   ListItem,
   Radio,
   Left,
@@ -773,8 +774,7 @@ class Settings extends Component {
                 />
               </Item>
 
-              <Item 
-                fixedLabel
+              <Item                
                 onPress={()=> ActionSheet.show
                   (
                     {
@@ -796,25 +796,29 @@ class Settings extends Component {
                 }                
               >
                 <Label>Gender</Label>
-                <Input
-                  disabled
-                  value={this.state.profile.gender} 
-                  />
+                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: 60}}>
+                  <Button full disabled transparent dark >
+                    <Text>{this.state.profile.gender}</Text>
+                  </Button>
+                </View>
               </Item>
-              <Item 
-                fixedLabel
+              
+              <Item                 
                 onPress = {() => this.datePicker.onPressDate()}
                 >
                 <Label>Birthday</Label>
-                <Input
-                  disabled 
-                  value={this.state.profile.birthday}
-                  onEndEditing={(e: any) => firebaseRef.update({birthday: e.nativeEvent.text})}
-                  onChangeText = {(value) =>this.setState({
-                    profile: { ...this.state.profile, birthday: value}
-                  })}
-                  />
+            
+                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: 60}}>
+                  <Button full disabled transparent dark >
+                    <Text>{this.state.profile.birthday}</Text>
+                  </Button>
+                </View>
+              
+
               </Item>
+
+
+              
               <Item fixedLabel>
                 <Label>Work</Label>
                 <Input 
@@ -870,6 +874,7 @@ class Settings extends Component {
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>
                 <Text>I like ... </Text>
               </ListItem>
+
               <Item 
                 fixedLabel
                     onPress={()=> ActionSheet.show
@@ -893,10 +898,13 @@ class Settings extends Component {
                     } 
                   >
                 <Label>Gender</Label>
-                <Input 
-                  disabled 
-                  value={this.state.profile.interested} />
+                <View style={{}}>
+                  <Button full disabled transparent dark >
+                    <Text>{this.state.profile.interested}</Text>
+                  </Button>
+                </View>
               </Item>
+            
               <Item fixedLabel>
                 <Label>Age Range</Label>
                   <MultiSlider 

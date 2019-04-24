@@ -52,33 +52,25 @@ const styles = StyleSheet.create({
 const slidesFemale = [
   {
     key: '1',
-    title: 'Welcome to Helm for WOMEN',
-    text: 'Dating for the modern people',
-    image: require('./assets/meeting-3546377_960_720.png'),
+    title: 'Welcome to Helm',
+    text: 'Dating for the modern people.',
+    image: require('./assets/banner-welcome.jpg'),
     imageStyle: styles.image,
-    backgroundColor: '#59b2ab',
+    backgroundColor: '#22bcb5',
   },
   {
     key: '2',
     title: 'Better conversations',
-    text: 'With each message photos will unblur',
-    image: require('./assets/talk.fw--300x247.png'),
+    text: 'With each message photos will unblur.',
+    image: require('./assets/banner-chat.jpg'),
     imageStyle: styles.image,
-    backgroundColor: '#febe29',
+    backgroundColor: '#22bcb5',
   },
   {
     key: '3',
     title: 'Only gentlemen',
-    text: 'Men need to be invited by a female',
-    image: require('./assets/fashion-business-men-transparent-background-cartoon-elegant-characters-isolated-vector-illustration-96857671.jpg'),
-    imageStyle: styles.image,
-    backgroundColor: '#22bcb5',
-  },  
-  {
-    key: '4',
-    title: 'Invite a gentelmen',
-    text: 'Refer a great guy with the community.',
-    image: require('./assets/handsome-man-png-hd-it-is-not-everyday-that-a-stranger-makes-you-write-handsome-guy-png-670.jpg'),
+    text: 'Men need to be invited by a female.',
+    image: require('./assets/banner-gentlemen.jpg'),
     imageStyle: styles.image,
     backgroundColor: '#22bcb5',
   }
@@ -88,32 +80,24 @@ const slidesMale = [
   {
     key: '1',
     title: 'Welcome to Helm',
-    text: 'Dating for the modern people',
-    image: require('./assets/meeting-3546377_960_720.png'),
+    text: 'Dating for the modern people.',
+    image: require('./assets/banner-welcome.jpg'),
     imageStyle: styles.image,
-    backgroundColor: '#59b2ab',
+    backgroundColor: '#22bcb5',
   },
   {
     key: '2',
     title: 'Better conversations',
-    text: 'With each message photos will unblur',
-    image: require('./assets/talk.fw--300x247.png'),
+    text: 'With each message photos will unblur.',
+    image: require('./assets/banner-chat.jpg'),
     imageStyle: styles.image,
-    backgroundColor: '#febe29',
+    backgroundColor: '#22bcb5',
   },
   {
     key: '3',
-    title: 'Only gentlemen',
-    text: 'Men need to be invited by a female',
-    image: require('./assets/fashion-business-men-transparent-background-cartoon-elegant-characters-isolated-vector-illustration-96857671.jpg'),
-    imageStyle: styles.image,
-    backgroundColor: '#22bcb5',
-  },  
-  {
-    key: '4',
     title: 'Enter your code',
-    text: 'In order to join the community.',
-    image: require('./assets/handsome-man-png-hd-it-is-not-everyday-that-a-stranger-makes-you-write-handsome-guy-png-670.jpg'),
+    text: 'Men need to be invited by a female.',
+    image: require('./assets/banner-gentlemen.jpg'),
     imageStyle: styles.image,
     backgroundColor: '#22bcb5',
   }
@@ -246,9 +230,27 @@ class Intro extends Component {
           }
         //code doesnt exist
         }else{
+
           //handle that code doesnt exist. 
           console.log('sorry code doesnt exist. ask your friend for another');
-          AlertIOS.alert('Whoops!','Code: '+userCode+' does not exist. Please ask your friend for another.');
+          
+          //AlertIOS.alert('Whoops!','Code: '+userCode+' does not exist. Please ask your friend for another.');
+
+          //let people in for testing
+          const { navigate } = this.props.navigation;
+
+          AlertIOS.alert(
+              'Welcome to Helm!',
+              'actually check code before launching.',
+              [
+                {
+                  text: 'Ok',
+                  onPress: () => navigate("Swipes"),
+                },
+              ],
+            );
+
+
 
         }
     });

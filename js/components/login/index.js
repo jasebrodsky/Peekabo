@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { ImageBackground } from "react-native";
+import { ImageBackground, Image } from "react-native";
 import { connect } from "react-redux";
 import * as firebase from "firebase";
 import Geocoder from 'react-native-geocoding';
@@ -20,7 +20,9 @@ import { setUser } from "../../actions/user";
 import styles from "./styles";
 import { AccessToken, LoginManager, GraphRequest, GraphRequestManager } from 'react-native-fbsdk';
 
-const background = require("../../../images/red.jpg");
+const background = require("../../../images/background_helm.jpg");
+const logo = require("../../../images/logo_helm.png");
+
 
 // const validate = values => {
 //   const error = {};
@@ -312,41 +314,20 @@ onLoginOrRegister = () => {
   render() {
     const { navigate } = this.props.navigation;
     return (
-      <Container>
-        <View style={styles.container}>
-          <Content>
-
-            <ImageBackground source={background} style={styles.shadow}>
-              <View>
-                <FontAwesome style=
-                  {{position: 'absolute', 
-                  marginTop: 20,             
-                  alignSelf: 'center',
-                  fontSize: 100, 
-                  color: 'white',
-                }}>{Icons.heart}</FontAwesome>
-
-                <Text 
-                  style={{
-                    position: 'relative',
-                    marginTop: 120,
-                    color: 'white',
-                    fontSize: 70, 
-                    textAlign: 'center',
-                    fontStyle: 'italic'
-                    }}>Peekaboo</Text>
-                <Button
-                  style={styles.btn}
-                  onPress = {() => this.onLoginOrRegister() }
-                >
-                  <Text>Login with Facebook</Text>
-                </Button>
-
-              </View>
-            </ImageBackground>
-          </Content>
+      <ImageBackground source={background} style={{width: '100%', height: '100%'}}>
+        <View style={{
+          flex: 1,
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <View />
+          <Image source={logo} style ={{height: 100}} />
+          <Button  style={{alignSelf: 'center', marginBottom: 100}} onPress = {() => this.onLoginOrRegister() }>
+            <Text>Login with Facebook</Text>
+          </Button>
         </View>
-      </Container>
+      </ImageBackground>
     );
   }
 }

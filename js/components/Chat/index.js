@@ -367,7 +367,7 @@ class Chat extends Component {
         </Header>
         
         <View style={{paddingLeft:10, paddingRight:10, alignItems:'center', flexDirection:'row', justifyContent: 'center'}}>
-          <Text style={{fontWeight:'600', color:'red'}}>TIME REMAINING: </Text>
+          <Text style={{fontWeight:'600', color:'red', paddingLeft: 5}}>TIME REMAINING: </Text>
           <Text numberOfLines ={1} style={{fontWeight:'400', color:'#888', width:200}}> 
             <TimerCountdown
               initialSecondsRemaining={ timeRemaining }
@@ -376,7 +376,10 @@ class Chat extends Component {
               style={{ fontSize: 20 }}
             />
           </Text> 
-              <Icon ios='ios-photos-outline' android="md-photos" onPress={() => this.setState({ imageViewerVisible: true})} style={{fontSize: 30, color: 'black',}}/>
+              <Icon name="ios-photos" onPress={() => this.setState({ imageViewerVisible: true})} style={{fontSize: 30, color: 'grey', paddingTop: 5, paddingRight: 5 }}/>
+
+
+
         </View>
 
         <View>
