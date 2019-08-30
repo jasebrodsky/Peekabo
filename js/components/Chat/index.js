@@ -1,10 +1,7 @@
-// to do: 
-//1. name and image need to be specific to the user who is NOT logged in. 
-//  save both images, names, user id's of match particpants in conversation object. Have logic in compoennt to show the image/name of other partiipant, based off userid
 
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Alert, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import { Alert, ScrollView, TouchableOpacity, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -29,7 +26,7 @@ import {
   Thumbnail,
   Right,
   Body,
-  View
+  View, 
 } from "native-base";
 import { openDrawer } from "../../actions/drawer";
 import { GiftedChat } from 'react-native-gifted-chat';
@@ -52,11 +49,18 @@ class Chat extends Component {
       timeLeft: null,
       matchDate: null,
       name: null,
+      birthday: '',
+      gender: '',
+      city_state: '',
+      user_education: '',
+      work: '',   
       userName: null,
       userId: null,
       userIdMatch: null,
       imageViewerVisible: false,
+      profileMaxHeight: "15%",
       images: [],
+      imageIndex: 0,
       about: ''
       //image: null
     }
@@ -114,9 +118,14 @@ class Chat extends Component {
     let conversationId = state.params.match_id;
     let images = state.params.images; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
     let about = state.params.about; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
+    let birthday = state.params.birthday;
+    let gender = state.params.gender;
+    let city_state = state.params.city_state;
+    let education = state.params.education;
+    let work = state.params.work;
     let match_userid = state.params.match_userid; 
     let match_state = state.params.match_state;
-    
+
     //save fb ref for quering conversation data
     firebaseRef = firebase.database().ref('/conversations/'+conversationId+'/');
 
@@ -180,12 +189,17 @@ class Chat extends Component {
 
         //loop through array and create an object now including it's blur radious. Push that object to imagesarray arrary.
         imageArray.forEach(function(item) {
-          imageObj = {'url':item.url, 'props':{'blurRadius': +blurRadius}};
+          imageObj = {'url':item.url, cache: 'force-cache', 'props':{'blurRadius': +blurRadius, source: {uri: item.url, cache: 'force-cache'}}};
           imagesArray.push(imageObj);
         })
           //setState with above elements
           this.setState({
             about: about,
+            birthday: birthday,
+            gender: gender,
+            city_state: city_state,
+            education: education,
+            work: work,
             name: participantName,
             userName: participantLoggedInUserName,
             blur: dataSnapshot.val().blur,
@@ -256,6 +270,7 @@ class Chat extends Component {
     this.setState({timeLeft:0}), navigate("Messages");
   }
 
+
   expiredChat = () => {
 
     return (
@@ -271,7 +286,36 @@ class Chat extends Component {
   }
 
 
+  //function to toggle profile show/hide
+  toggleProfile = () => {
+
+    //if profileMaxHeight is 50%, then change to 15%, else change to 50%
+    if (this.state.profileMaxHeight == '15%'){
+      this.setState({
+        profileMaxHeight: "50%"
+      });
+    }else{
+      this.setState({
+        profileMaxHeight: "15%"
+      });
+    }
+  }
+
+
+  getAge(dateString) {
+      var today = new Date();
+      var birthDate = new Date(dateString);
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+      }
+      return age;
+  }
+
+
   render() {
+
 
     const { state, navigate } = this.props.navigation;
     let currentDate = new Date();
@@ -281,18 +325,60 @@ class Chat extends Component {
     let image = this.state.image; //pull first image from images array instead.
     let about = this.state.about;
     let matchActive = this.state.matchActive;
+    let name = this.state.name;
+    let birthday = this.state.birthday;
+    let age = this.getAge(birthday);
+    let gender = this.state.gender;
+    let city_state = this.state.city_state;
+    let education = this.state.education;
+    let work = this.state.work;
+
+
     return (
       <Container>
-        <Modal visible={this.state.imageViewerVisible} transparent={true}>
-            <ImageViewer 
-              imageUrls={this.state.images}
-              onSwipeDown = {() => this.setState({ imageViewerVisible: false})}
-              onClick = {() => this.setState({ imageViewerVisible: false})}
-            />
-          <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
-          {about}
-          </Text>
-        </Modal>      
+
+          <Modal 
+            visible={this.state.imageViewerVisible} 
+            transparent={true}
+            animationType="slide">
+
+              <ImageViewer 
+                index = {this.state.imageIndex}
+                imageUrls={this.state.images}
+                onChange = {(index) => this.setState({ imageIndex: index})}
+                onSwipeDown = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: 66, imageIndex: this.state.imageIndex})}
+                onClick = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: 66})}
+              />
+
+                <View 
+                  flex={0}
+                  alignItems="flex-start"
+                  justifyContent="center"
+                  borderWidth={1}
+                  borderColor="grey"
+                  borderRadius={5}
+                  backgroundColor="white"
+                  maxHeight= {this.state.profileMaxHeight} //profileMaxHeight
+                  
+                >
+                  <ScrollView 
+                    flexGrow={0}
+                    contentContainerStyle={{
+                      padding: 15,
+                      backgroundColor:'white'
+                    }}>
+                      <TouchableOpacity onPress={() => this.toggleProfile() }>
+                        <View>                        
+                          <Text style={{fontWeight: "bold"}} >{name}</Text>                      
+                          <Text>{age}, {gender}, {city_state}</Text>
+                          <Text style={{marginBottom: 15}} note>{work}</Text>
+                          <Text note>{about}</Text>                   
+                        </View>
+                      </TouchableOpacity>
+                  </ScrollView>
+                </View>          
+          </Modal> 
+
         <Header>
           <Left>
             <Button transparent onPress={() => this.goBack()}>                              
@@ -376,14 +462,11 @@ class Chat extends Component {
               style={{ fontSize: 20 }}
             />
           </Text> 
-              <Icon name="ios-photos" onPress={() => this.setState({ imageViewerVisible: true})} style={{fontSize: 30, color: 'grey', paddingTop: 5, paddingRight: 5 }}/>
-
-
-
+              <Icon name="ios-person" onPress={() => this.setState({ imageViewerVisible: true})} style={{fontSize: 30, color: 'grey', paddingTop: 5, paddingRight: 5 }}/>
         </View>
 
         <View>
-          <Image source={{uri: image}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
+          <Image source={{uri: image, cache: 'force-cache'}} position="absolute" resizeMode="cover" blurRadius={Number(this.state.blur)}  
           style={[styles.backgroundImage, {height:height, width: width}]}
           />
         </View>

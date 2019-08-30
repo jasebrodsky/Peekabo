@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { AsyncStorage, ImageBackground, Alert, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
+import { AsyncStorage, Image, ImageBackground, Alert, Dimensions, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
 import RNfirebase from 'react-native-firebase';
 import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -44,6 +44,8 @@ import {
 import { setIndex } from "../../actions/list";
 import { openDrawer } from "../../actions/drawer";
 
+//shortcut to Analytics
+let Analytics = RNfirebase.analytics();
 
 var PHOTO_OPTIONS = [
   'View photo',  
@@ -73,6 +75,7 @@ class Settings extends Component {
 
   constructor(props){
     super(props)
+    Analytics.setAnalyticsCollectionEnabled(true);
 
   this.state = {
       imageViewerVisible: false,
@@ -132,6 +135,10 @@ class Settings extends Component {
   //After component mounts prompt for permission to recieve notifications and save fcmToken to database
   componentDidMount() {
     this.checkPermission();
+
+    
+    this.runAnalytics()
+
   }  
 
   componentWillUnmount() {
@@ -141,6 +148,30 @@ class Settings extends Component {
   }
 
 
+  async runAnalytics () {
+
+    Analytics.setCurrentScreen('settings_screen', 'Settings');
+    //console.log('userid is: '+JSON.stringify(this.state.profile.userid));
+    Analytics.setUserId(this.state.profile.userid);
+    Analytics.setUserProperty('name', this.state.profile.first_name+' '+this.state.profile.last_name);
+    Analytics.setUserProperty('about', this.state.profile.about);
+    Analytics.setUserProperty('birthday', this.state.profile.birthday);
+    Analytics.setUserProperty('education', this.state.profile.education);
+    Analytics.setUserProperty('gender', this.state.profile.gender);
+    Analytics.setUserProperty('gender_pref', this.state.profile.gender_pref);
+    Analytics.setUserProperty('interested', this.state.profile.interested);
+    Analytics.setUserProperty('last_conversation_count', this.state.profile.last_conversation_count);
+    Analytics.setUserProperty('last_login', this.state.profile.last_login);
+    Analytics.setUserProperty('last_swipe_sesh_date', this.state.profile.last_swipe_sesh_date);
+    Analytics.setUserProperty('max_age', this.state.profile.max_age);
+    Analytics.setUserProperty('max_distance', this.state.profile.max_distance);
+    Analytics.setUserProperty('min_age', this.state.profile.min_age);
+    Analytics.setUserProperty('notifications_match', this.state.profile.notifications_match);
+    Analytics.setUserProperty('notifications_message', this.state.profile.notifications_message);
+    Analytics.setUserProperty('status', this.state.profile.status);
+    Analytics.setUserProperty('swipe_count', this.state.profile.swipe_count);
+    Analytics.setUserProperty('work', this.state.profile.work);
+  }
 
   // check if permission for notification has been granted previously, then getToken. 
   async checkPermission() {
@@ -308,7 +339,7 @@ class Settings extends Component {
 
       Alert.alert(
         'Are you sure you want to delete your account?',
-        'If you delete your account, you will loose touch with everyone within Peekabo. If you would like to take a break, tap the pause button below',
+        'If you delete your account, you will loose touch with everyone within Helm. If you would like to take a break, tap the pause button below',
         [
           {text: 'Delete Account', onPress: () => userDelete(), style: 'destructive'},
           {text: 'Pause', onPress: () => this.pauseUser()},
@@ -362,7 +393,7 @@ class Settings extends Component {
         includeExif: true,
       }).then(image => {
 
-          console.log('image is: '+JSON.stringify(image));
+          //console.log('image is: '+JSON.stringify(image));
           // Create a root reference
           
           var storageRef = firebase.storage().ref(); 
@@ -376,11 +407,11 @@ class Settings extends Component {
             
             //var image_item_count_start = i+exisiting_images_count;
             var image_item_count_start = exisiting_images_count++;
-            console.log('image_item_count_start: '+image_item_count_start);
+            //console.log('image_item_count_start: '+image_item_count_start);
 
             // Create a reference to 'images/userid/i.jpg'
             var imagesRef = storageRef.child('images/'+userId+'/'+image_item_count_start+'.jpg');
-            
+    
             // save reference to where to save the new URI 
             var imagesObjRef = firebase.database().ref('/users/'+userId+'/images/');
             
@@ -396,6 +427,12 @@ class Settings extends Component {
             let mime = 'image/jpg'
             let uploadUri = Platform.OS === 'ios' ? imagePath.replace('file://', '') : imagePath
             
+            // Create file metadata specific to caching.
+            let newMetadata = {
+              cacheControl: 'public,max-age=31536000',
+              contentType: 'image/jpeg'
+            }
+
             //read selected image and build blob          
             fs.readFile(imagePath, 'base64')
               .then((data) => {
@@ -410,8 +447,20 @@ class Settings extends Component {
             //then return url of new file from storage
             .then(() => {
               uploadBlob.close();
+
+            // Update metadata properties to image reference
+            imagesRef.updateMetadata(newMetadata).then(function(metadata) {
+              // Updated metadata for 'images/forest.jpg' is returned in the Promise
+              //console.log('metadata is: '+JSON.stringify(metadata));
+            }).catch(function(error) {
+              // Uh-oh, an error occurred!
+              console.log(error);
+            })  
+
+
               return imagesRef.getDownloadURL()
-            })
+            })               
+            
             //then update all image references for user in multi-path update
             .then((url) => {
 
@@ -422,8 +471,8 @@ class Settings extends Component {
               var image_item_count_start_upload = exisiting_images_count_upload++;
 
               // push new image object into imagesObj 
-              imagesObj.push({url: url, file: image_item_count_start_upload});
-              console.log('imagesObj: '+JSON.stringify(imagesObj));
+              imagesObj.push({url: url, file: image_item_count_start_upload, cache: 'force-cache'});
+              //console.log('imagesObj: '+JSON.stringify(imagesObj));
 
               //call updateData function with new URI's to pass in multi-path update
               // Can we put this under after all images from phone have been processed to reduce calls to updateData fuction? 
@@ -434,7 +483,7 @@ class Settings extends Component {
         } 
       ).catch(e => console.log(e));
     }else{
-      alert('Please delete a photo first.');
+      Alert.alert('Sorry','Please delete a photo first');
     }
 
   }
@@ -447,6 +496,9 @@ class Settings extends Component {
 
   //function to renderImage into markup
   renderImage(image, key) {
+
+
+    //console.log('image is: '+JSON.stringify(image));
     return <TouchableOpacity onPress={()=> ActionSheet.show
                       (
                         {
@@ -462,55 +514,66 @@ class Settings extends Component {
                                 //set image viewer visibility on
                                 imageViewerVisible: true,
                                 // save to state the selected image to view 
-                                selectedImage: [{url: image.url}]  
+                                selectedImage: [{url: image.url, cache: 'force-cache'}]  
                               })
                             }
 
                           if ((buttonIndex) === 1) {
                             //make main image 
-
-                            //save copy of profile images from state
-                            var profile_images = this.state.profile.images; // make a separate copy of the array
                
-                            // save selected image to new variable to re-insert into images later
-                           //var main_image = {[key]: profile_images[key]};
-                            var main_image = profile_images[key];
-
-                            console.log('profile images are first: '+JSON.stringify(profile_images));
-
                             //delete object matching key
-                            delete profile_images[key];
-
-                            console.log('profile images after deletion: '+JSON.stringify(profile_images));
-                            //insert new main image into first position of profile images
-                            profile_images.unshift(main_image);
-
-                            console.log('profile images after shift: '+JSON.stringify(profile_images));
-
-                            //new_profile_images = [main_image, ...profile_images];
-                            //MAYBE REMOVE NULLS FROM ...PROFILE_IMAGES, MAYBE THATS BREAKING updateData FUNCTION?
-                            //console.log('new_profile_images is: '+JSON.stringify(new_profile_images));
+                            //save original state of images array
+                            var arrayImages = [...this.state.profile.images];
                             
-                            //multi-path update with new profile images
-                            this.updateData('images', userId, profile_images );
+                            // save selected image to new variable to re-insert into images later
+                            let main_image = arrayImages[key];
+                            //console.log('profile images are first: '+JSON.stringify(arrayImages));
 
-                            }
+                            //save the index of image to remove
+                            var index = arrayImages.indexOf(key)
+                            
+                            //console.log('main image before splice is: '+JSON.stringify(main_image));
+
+
+
+                            //remove image at index
+                            arrayImages.splice(key, 1);
+                            //console.log('profile images after splice: '+JSON.stringify(arrayImages));
+
+                            //console.log('main image after splice is: '+JSON.stringify(main_image));
+
+
+
+                            //insert new main image into first position of profile images
+                            arrayImages.unshift(main_image);
+                            //console.log('profile images after shift: '+JSON.stringify(arrayImages));
+
+                            //set state to new image array
+                            this.setState({profile: { ...this.state.profile, images: arrayImages}});                   
+
+                            //multi-path update with new array of images
+                            this.updateData('images', userId, this.state.profile.images );
+                          }
 
                           if ((buttonIndex) === 2) {
 
                             //if only one photo exists, disable deleting, else allow user to delete image. 
                             if(this.state.profile.images.length == 1){
-                              alert('Can not delete only photo');
+                              console.log('LENGTH profile_images in state, wont delete: '+(this.state.profile.images).length);
+                              console.log('STATE of profile.imgages in state: '+JSON.stringify(this.state.profile.images));
+                              Alert.alert('Sorry','Can not delete only photo');
+
                             }else{
+                              console.log('LENGTH profile_images in state, will delete: '+(this.state.profile.images).length);
+                              console.log('STATE of profile.imgages in state: '+JSON.stringify(this.state.profile.images));
 
                               //remove image
                               //save copy of profile images from state
                               var profile_images = this.state.profile.images; // make a separate copy of the array                                                  
-                              console.log('profile_images in state: '+JSON.stringify(profile_images));
+                              //console.log('profile_images in state: '+JSON.stringify(profile_images));
  
                               //remove selected image from storage
                               // Create a reference to the file to delete
-                              
                               // Create a root reference
                               var storageRef = firebase.storage().ref(); 
 
@@ -528,21 +591,30 @@ class Settings extends Component {
                                 console.log('deleted successfully');
                               }).catch(function(error) {
                                 // Uh-oh, an error occurred!
-                                console.log('deleted NOT successfully');
+                                console.log('deleted NOT successfully, error is: '+JSON.stringify(error));
                               });
-
-                              //delete object matching key
-                              delete profile_images[key];
+                                 
+                              //save original state of images array
+                              var arrayImages = [...this.state.profile.images];
+                              
+                              //save the index of image to remove
+                              var index = arrayImages.indexOf(key)
+                              
+                              //remove image at index
+                              arrayImages.splice(key, 1);
+                              
+                              //set state to new image array
+                              this.setState({profile: { ...this.state.profile, images: arrayImages}});                   
 
                               //multi-path update with new array of images
-                              this.updateData('images', userId, profile_images );
+                              this.updateData('images', userId, this.state.profile.images );
 
                             }
                           }
                         }
                       )
                     } >
-              <ImageBackground style={{width: 100, height: 100, marginLeft:10 }} source={image} />
+              <Image style={{width: 100, height: 100, marginLeft:10 }} source={image} />
           </TouchableOpacity>
 
   }
@@ -613,6 +685,21 @@ class Settings extends Component {
               case 'about':
                 updateObj[`matches/${key}/${userid}/about`] = payload;
                 break;
+              case 'birthday':
+                updateObj[`matches/${key}/${userid}/birthday`] = payload;
+                break;
+              case 'gender':
+                updateObj[`matches/${key}/${userid}/gender`] = payload;
+                break;
+              case 'city_state':
+                updateObj[`matches/${key}/${userid}/city_state`] = payload;
+                break;
+              case 'work':
+                updateObj[`matches/${key}/${userid}/work`] = payload;
+                break;
+              case 'education':
+                updateObj[`matches/${key}/${userid}/education`] = payload;
+                break;
             }
           });
         }
@@ -677,6 +764,25 @@ class Settings extends Component {
     return gender_pref;
   }
 
+  _onBlur() {
+    this._timeoutID = setTimeout(() => {
+      alert('blured');
+
+    }, 0);
+  }
+  
+  _onFocus() {
+    clearTimeout(this._timeoutID);
+
+    alert('focued');
+  }
+
+  _handleClick = (e) => {
+
+    alert('sup playa');
+  }
+
+
 
   render() {
 
@@ -696,7 +802,14 @@ class Settings extends Component {
                 </Button>;
     }
 
+    //determine width of device in order for custom margin between iphones
+    let deviceWidth = Dimensions.get('window').width
 
+    //if device width is 414 (iphone+), then margins should be 58, else 40. 
+    let genderMargin = deviceWidth == 414 ? 58 : 46;
+    let birthdayMargin = deviceWidth == 414 ? 50 : 38;
+
+    //console.log('deviceWidth is: '+deviceWidth);
         
     return (
       <Container>
@@ -752,7 +865,9 @@ class Settings extends Component {
               }
             }}
             onDateChange={(date) => firebaseRef.update({birthday: date})
-            .then(this.setState({profile: { ...this.state.profile, birthday: date}}))}
+            .then(this.setState({profile: { ...this.state.profile, birthday: date}}))
+            .then(this.updateData('birthday', userId, date))
+          }
           />
           <View style={{  flex: 1, padding: 0 }}>
             <Form>
@@ -773,7 +888,6 @@ class Settings extends Component {
 
                 />
               </Item>
-
               <Item                
                 onPress={()=> ActionSheet.show
                   (
@@ -789,14 +903,14 @@ class Settings extends Component {
                         } else {
                           this.setState({
                             profile: { ...this.state.profile, gender: GENDER_OPTIONS[buttonIndex]}
-                          }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref() });
+                          }), firebaseRef.update({gender: GENDER_OPTIONS[buttonIndex], gender_pref: this.updateGenderPref() }).then(this.updateData('gender', userId, GENDER_OPTIONS[buttonIndex])); 
                         }
                     }
                   )
                 }                
               >
                 <Label>Gender</Label>
-                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: 60}}>
+                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: genderMargin}}>
                   <Button full disabled transparent dark >
                     <Text>{this.state.profile.gender}</Text>
                   </Button>
@@ -808,7 +922,7 @@ class Settings extends Component {
                 >
                 <Label>Birthday</Label>
             
-                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: 60}}>
+                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'flex-start', marginLeft: birthdayMargin}}>
                   <Button full disabled transparent dark >
                     <Text>{this.state.profile.birthday}</Text>
                   </Button>
@@ -827,6 +941,8 @@ class Settings extends Component {
                                 profile: { ...this.state.profile, work: newwork}
                               })}                  
                   onEndEditing={(e: any) => firebaseRef.update({work: e.nativeEvent.text})}
+                  onEndEditing={(e: any) => this.updateData('work', userId, e.nativeEvent.text)}
+
                 />
               </Item>
 
@@ -838,23 +954,21 @@ class Settings extends Component {
                                 profile: { ...this.state.profile, education: neweducation}
                               })}                  
                   onEndEditing={(e: any) => firebaseRef.update({education: e.nativeEvent.text})}
+                  onEndEditing={(e: any) => this.updateData('education', userId, e.nativeEvent.text)}
+
                 />
               </Item>
-
-
-
               <Item fixedLabel>
                 <Label>About</Label>
                 <Input 
+                  style={{minHeight: 50, height: '100%', maxHeight: 150}}
                   multiline={true}
+                  onContentSizeChange={(e) => console.log('updated size')}
                   value={this.state.profile.about}
                   onChangeText={(about) => this.setState({
                                 profile: { ...this.state.profile, about: about}
                               })}                  
-                  onEndEditing={(e: any) => this.updateData('about', userId, e.nativeEvent.text)}
-               
-
-
+                  onEndEditing={(e: any) => this.updateData('about', userId, e.nativeEvent.text)}             
                 />
               </Item>
               <Item fixedLabel>
@@ -951,28 +1065,43 @@ class Settings extends Component {
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>
                 <Text>Notify me when...</Text>
               </ListItem>
-              <ListItem>
-                <Left>
-                  <Text>New message</Text>
-                </Left>
-                <Right>
-                  <Switch 
-                    value={this.state.profile.notifications_message}
-                    onValueChange={this.onPressHandle1}
-                   />
-                </Right>
-              </ListItem>
-              <ListItem>
-               <Left>
-                  <Text>New match</Text>
-                </Left>
-                <Right>
-                  <Switch 
-                    value={this.state.profile.notifications_match}
-                    onValueChange={this.onPressHandle2}
-                   />
-                </Right>
-              </ListItem>
+              
+
+          <ListItem>
+            <Left>
+              <Label style={{color: "dimgrey"}}>New Message</Label>
+            </Left>
+            
+            <Body>              
+            </Body>
+            
+            <Right>
+              <Switch 
+                value={this.state.profile.notifications_message}
+                onValueChange={this.onPressHandle1}
+               />
+            </Right>
+          </ListItem>
+
+          <ListItem>
+            <Left>
+              <Label style={{color: "dimgrey"}}>New Match</Label>
+            </Left>
+            
+            <Body>              
+            </Body>
+            
+            <Right>
+              <Switch 
+                value={this.state.profile.notifications_match}
+                onValueChange={this.onPressHandle2}
+               />
+            </Right>
+          </ListItem>
+
+
+          
+
               <ListItem itemDivider style={{flexDirection: "row", justifyContent: "flex-start"}}>
                 <Text>Contact us about...</Text>
               </ListItem>

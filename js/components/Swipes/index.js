@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
-import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity,Modal,ScrollView,StyleSheet,Share,Text,View,TouchableWithoutFeedback } from 'react-native'
+import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity, TouchableHighlight, Modal,ScrollView,StyleSheet,Share,Text,View,TouchableWithoutFeedback } from 'react-native'
 import DrawBar from "../DrawBar";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -41,6 +41,11 @@ class Swipes extends Component {
       user_name: null,
       user_images: '',
       user_about: '',
+      user_birthday: '',
+      user_gender: '',
+      user_city_state: '',
+      user_education: '',
+      user_work: '',
       matchImages: [{url: 'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg'}],
       matchAbout: '',
       profiles: [],
@@ -50,6 +55,7 @@ class Swipes extends Component {
       isEmpty: false,
       allSwiped: false,
       imageViewerVisible: false,
+      profileMaxHeight: "15%",
       swipesStatsShow: false,
       swipeCountStart: 0,
       query_start: null,
@@ -81,6 +87,11 @@ class Swipes extends Component {
             user_name: snapshot.val().first_name,
             user_images: snapshot.val().images,
             user_about: snapshot.val().about,
+            user_birthday: snapshot.val().birthday,
+            user_gender: snapshot.val().gender,
+            user_city_state: snapshot.val().city_state,
+            user_education: snapshot.val().education,
+            user_work: snapshot.val().work,
             swipeCountStart: snapshot.val().swipe_count         
             }
           );
@@ -179,11 +190,16 @@ class Swipes extends Component {
 
 
   //function to call when a new match is intiated.
-  pushNewMatch = (images, name_match, userid, userid_match, about_match) => {
-    
+  pushNewMatch = (images, name_match, userid, userid_match, about_match, birthday_match, gender_match, city_state_match, education_match, work_match) => {
+
     user_name = this.state.user_name;
     user_images = this.state.user_images;
     user_about = this.state.user_about;
+    user_birthday = this.state.user_birthday;
+    user_gender = this.state.user_gender;
+    user_city_state = this.state.user_city_state;
+    user_education = this.state.user_education;
+    user_work = this.state.user_work;
 
     //create ref to conversations obj
     conversationRef = firebase.database().ref('conversations/');
@@ -235,6 +251,11 @@ class Swipes extends Component {
             last_message: "You got a new match!", 
             last_message_date: (new Date().getTime()*-1), 
             name: name_match,
+            birthday: birthday_match ,
+            gender: gender_match,
+            city_state: city_state_match,
+            education: education_match,
+            work: work_match,
             active: 'true',
             match_date: new Date().getTime(),
             match_id: match_id,
@@ -250,6 +271,11 @@ class Swipes extends Component {
             last_message: "You got a new match!",
             last_message_date: (new Date().getTime()*-1), 
             name: user_name,
+            birthday: user_birthday,
+            gender: user_gender,
+            city_state: user_city_state,
+            education: user_education,
+            work: user_work,
             active: 'true',
             match_date: new Date().getTime(),
             match_id: match_id,
@@ -276,8 +302,8 @@ class Swipes extends Component {
   }
 
   //Function to save new swipe object
-  pushNewSwipe = (like, userid, userid_match, match_status, name_match, about_match, imagesObj) => {
-    
+  pushNewSwipe = (like, userid, userid_match, match_status, name_match, about_match, imagesObj, birthday_match, gender_match, city_state_match, education_match, work_match) => {
+
     //save potential_match into bool var. 
     //let potential_match = (match_status == 'potential_match') ? true : false;
     let potential_match = true;
@@ -304,7 +330,7 @@ class Swipes extends Component {
       // create new match object
       if (potential_match == true) { 
          //alert("save new match!");
-         this.pushNewMatch(imagesObj, name_match, userid, userid_match, about_match);
+         this.pushNewMatch(imagesObj, name_match, userid, userid_match, about_match, birthday_match, gender_match, city_state_match, education_match, work_match);
       }
 
   }
@@ -354,6 +380,21 @@ class Swipes extends Component {
       return age;
   }
 
+  //function to toggle profile show/hide
+  toggleProfile = () => {
+
+    //if profileMaxHeight is 50%, then change to 15%, else change to 50%
+    if (this.state.profileMaxHeight == '15%'){
+      this.setState({
+        profileMaxHeight: "50%"
+      });
+    }else{
+      this.setState({
+        profileMaxHeight: "15%"
+      });
+    }
+  }
+
   //handle swipe events
   onSwiped = (cardIndex, direction) => {
     // save variable for direction of swipe
@@ -367,7 +408,15 @@ class Swipes extends Component {
           this.state.profiles[cardIndex].match_type, // potential match // this.state.profiles[cardIndex].potential_match
           this.state.profiles[cardIndex].first_name, //match name
           this.state.profiles[cardIndex].about, //match about
-          this.state.profiles[cardIndex].images //matche images
+          this.state.profiles[cardIndex].images, //match images
+          //add 
+          this.state.profiles[cardIndex].birthday, //match age
+          this.state.profiles[cardIndex].gender, //match gender
+          this.state.profiles[cardIndex].city_state, //match city
+          this.state.profiles[cardIndex].education,  // match job
+          this.state.profiles[cardIndex].work  // match work
+
+
         ),this.setState({ cardIndex: cardIndex+1});//update card index in state, so that image modal has correct images 
   };
 
@@ -431,6 +480,12 @@ class Swipes extends Component {
     const dimensions = Dimensions.get('window');
     const height = dimensions.height;
     const width = dimensions.width
+
+    //determine width of device in order for custom margin between iphones
+    let deviceWidth = Dimensions.get('window').width
+
+    //if device width is 414 (iphone+), then margins should be 58, else 40. 
+    let loadingLeftPosition = deviceWidth == 414 ? 185 : 173;     
     
     failImage = 'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg';
     let cardIndex = this.state.cardIndex;
@@ -483,7 +538,7 @@ class Swipes extends Component {
             </View>}
         </View>
 
-        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: width/2, top: height/2}}>
+        <View style={{flex: 1, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'absolute', left: loadingLeftPosition, top: height/2}}>
             <ActivityIndicator animating={this.state.loading} size="large" color="#0000ff" />
          </View>
         
@@ -492,7 +547,7 @@ class Swipes extends Component {
               this.swiper = swiper
             }}
             verticalSwipe = {false}
-            onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
+            onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchBirthday: this.state.profiles[cardIndex].birthday, matchWork: this.state.profiles[cardIndex].work, matchGender: this.state.profiles[cardIndex].gender, matchCityState: this.state.profiles[cardIndex].city_state, matchEducation: this.state.profiles[cardIndex].education,  matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
             cardIndex={this.state.cardIndex}
             backgroundColor={'#4FD0E9'}
             stackSeparation={12}
@@ -618,16 +673,62 @@ class Swipes extends Component {
 
 
 
-        <Modal visible={this.state.imageViewerVisible} transparent={true}>
-          <ImageViewer
-            failImageSource = {'https://image.nj.com/home/njo-media/width620/img/entertainment_impact/photo/lil-bub-catsbury-park-cat-convention-asbury-park-2018jpg-42ba0699ef9f22e0.jpg'}
-            imageUrls = {this.state.matchImages}
-            onSwipeDown = {() => this.setState({ imageViewerVisible: false})}
-            onClick = {() => this.setState({ imageViewerVisible: false})}/>
-          <Text style={{padding: 15,backgroundColor:'white', color:'black'}}>
-            {this.state.matchAbout}
-          </Text>
-        </Modal>
+
+
+
+
+          <Modal 
+            visible={this.state.imageViewerVisible} 
+            transparent={true}
+            animationType="slide">
+
+              <ImageViewer 
+                index = {this.state.imageIndex}
+                imageUrls={this.state.matchImages}
+                onChange = {(index) => this.setState({ imageIndex: index})}
+                onSwipeDown = {() => this.setState({ imageViewerVisible: false, imageIndex: 0, profileMaxHeight: '15%'})}
+                onClick = {() => this.setState({ imageViewerVisible: false, imageIndex: 0,  profileMaxHeight: '15%'})}
+              />
+
+                <View 
+                  flex={0}
+                  alignItems="flex-start"
+                  justifyContent="center"
+                  borderWidth={1}
+                  borderColor="grey"
+                  borderRadius={5}
+                  backgroundColor="white"
+                  maxHeight= {this.state.profileMaxHeight} //profileMaxHeight
+                  
+                >
+                  <ScrollView 
+                    flexGrow={0}
+                    contentContainerStyle={{
+                      padding: 15,
+                      backgroundColor:'white'
+                    }}>
+                      <TouchableOpacity onPress={() => this.toggleProfile() }>
+                        <View>   
+
+                          <Text style={{fontWeight: "bold"}} >{this.calculateAge(this.state.matchBirthday)}, {this.state.matchGender}, {this.state.matchCityState}</Text>
+                          <Text style={{marginBottom: 4}} note>{this.state.matchWork} </Text>
+                          <Text numberOfLines={2} note>{this.state.matchAbout} </Text>
+
+                        </View>
+                      </TouchableOpacity>
+                  </ScrollView>
+                </View>          
+          </Modal> 
+
+
+
+
+
+
+
+
+
+
 
       </Container>
     )

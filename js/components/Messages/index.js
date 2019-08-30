@@ -72,6 +72,11 @@ class Messages extends Component {
     let images = object.images;
     let name = object.name;
     let about = object.about;
+    let birthday = object.birthday;
+    let gender = object.gender;
+    let city_state = object.city_state;
+    let education = object.education;
+    let work = object.work;
     let match_date = object.match_date;
     let last_message = object.last_message;
     let last_message_date = object.last_message_date;
@@ -87,7 +92,7 @@ class Messages extends Component {
     if (type == 'active' && match_state == 'active'){
       
       return(
-        <ListItem key={i} onPress={() => navigate("Chat", {match_id: match_id, match_state: match_state, match_userid: match_userid, about: about, name: name, images:images, blurRadius: blur })}>        
+        <ListItem key={i} onPress={() => navigate("Chat", {match_id: match_id, match_state: match_state, match_userid: match_userid, about: about, name: name, birthday: birthday, gender: gender, city_state: city_state, education: education, work: work, images:images, blurRadius: blur })}>        
           <ProgressCircle
               matchStatus = {match_state}
               blur={blur}
@@ -98,7 +103,7 @@ class Messages extends Component {
               shadowColor="#999"
               bgColor="#fff"
           >
-              <Thumbnail blurRadius={blur} round size={80} source={{uri: url}} />
+              <Thumbnail blurRadius={blur} round size={80} source={{uri: url, cache: 'force-cache'}} />
             </ProgressCircle>
           <Body>
             <Text>{name}</Text>

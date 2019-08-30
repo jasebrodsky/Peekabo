@@ -241,7 +241,7 @@ onLoginOrRegister = () => {
                     fb_id: fb_result.id,
                     last_name: fb_result.last_name,
                     email: fb_result.email,
-                    images: [{file: '0', url: largePhotoURL}],
+                    images: [{file: '0', url: largePhotoURL, cache: 'force-cache'}],
                     last_login: Date.now(),
                     swipe_count: 0,
                     last_swipe_sesh_date: Date.now(),
