@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { StyleSheet, AsyncStorage } from "react-native";
-import CodePush from "react-native-code-push";
+import codePush from "react-native-code-push";
 import firebase from 'react-native-firebase';
 
 import { Container, Content, Text, View, Root } from "native-base";
@@ -9,6 +9,7 @@ import MainStackRouter from "./Routers/MainStackRouter";
 import ProgressBar from "./components/loaders/ProgressBar";
 
 import theme from "./themes/base-theme";
+
 
 
 const styles = StyleSheet.create({
@@ -38,29 +39,29 @@ class App extends Component {
 
   componentDidMount() {
     
-    CodePush.sync(
-      { updateDialog: true, installMode: CodePush.InstallMode.IMMEDIATE },
-      status => {
-        switch (status) {
-          case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
-            this.setState({ showDownloadingModal: true });
-            this._modal.open();
-            break;
-          case CodePush.SyncStatus.INSTALLING_UPDATE:
-            this.setState({ showInstalling: true });
-            break;
-          case CodePush.SyncStatus.UPDATE_INSTALLED:
-            this._modal.close();
-            this.setState({ showDownloadingModal: false });
-            break;
-          default:
-            break;
-        }
-      },
-      ({ receivedBytes, totalBytes }) => {
-        this.setState({ downloadProgress: receivedBytes / totalBytes * 100 });
-      }
-    );
+    // CodePush.sync(
+    //   { updateDialog: true, installMode: CodePush.InstallMode.IMMEDIATE },
+    //   status => {
+    //     switch (status) {
+    //       case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
+    //         this.setState({ showDownloadingModal: true });
+    //         this._modal.open();
+    //         break;
+    //       case CodePush.SyncStatus.INSTALLING_UPDATE:
+    //         this.setState({ showInstalling: true });
+    //         break;
+    //       case CodePush.SyncStatus.UPDATE_INSTALLED:
+    //         this._modal.close();
+    //         this.setState({ showDownloadingModal: false });
+    //         break;
+    //       default:
+    //         break;
+    //     }
+    //   },
+    //   ({ receivedBytes, totalBytes }) => {
+    //     this.setState({ downloadProgress: receivedBytes / totalBytes * 100 });
+    //   }
+    // );
   }
 
 
@@ -137,4 +138,11 @@ class App extends Component {
   }
 }
 
-export default App;
+let codePushOptions = { 
+  checkFrequency: codePush.CheckFrequency.ON_APP_RESUME, 
+  installMode: codePush.InstallMode.ON_NEXT_RESUME 
+}
+
+App = codePush(codePushOptions)(App);
+
+module.exports = App

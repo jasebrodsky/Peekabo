@@ -1,6 +1,0 @@
-framework module Pods_Blured_tvOSTests {
-  umbrella header "Pods-Blured-tvOSTests-umbrella.h"
-
-  export *
-  module * { export * }
-}

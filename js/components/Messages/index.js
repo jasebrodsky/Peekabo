@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { connect } from "react-redux";
 import {Dimensions, ActivityIndicator, ScrollView, ListView } from 'react-native';
-import DrawBar from "../DrawBar";
+import RNfirebase from 'react-native-firebase';
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import FontAwesome, { Icons } from 'react-native-fontawesome';
@@ -25,9 +24,7 @@ import {
   Body,
   View
 } from "native-base";
-import { setIndex } from "../../actions/list";
-import { openDrawer } from "../../actions/drawer";
-import { GiftedChat } from 'react-native-gifted-chat';
+
 import ProgressCircle from 'react-native-progress-circle';
 
 
@@ -46,18 +43,6 @@ class Messages extends Component {
     }
 
   }
-  static navigationOptions = ({ navigation }) => {
-    return {
-      title: null,
-    }
-  };
-  static propTypes = {
-    name: React.PropTypes.string,
-    setIndex: React.PropTypes.func,
-    list: React.PropTypes.arrayOf(React.PropTypes.string),
-    openDrawer: React.PropTypes.func
-  };
-
 
 
   //RE FORMATE IMAGES NOW THAT IT'S AN OBJECT (NOT AN ARRAY)
@@ -144,9 +129,9 @@ class Messages extends Component {
 
   componentWillMount() {
     const { state, navigate } = this.props.navigation;
-
-     userId = firebase.auth().currentUser.uid;
-     firebaseRef = firebase.database().ref('/matches/'+userId+'/').orderByChild('last_message_date').limitToFirst(50);
+    let Analytics = RNfirebase.analytics();
+    userId = firebase.auth().currentUser.uid;
+    firebaseRef = firebase.database().ref('/matches/'+userId+'/').orderByChild('last_message_date').limitToFirst(50);
 
       var convos = [];
       //put message data into state in appropriate format
@@ -194,7 +179,12 @@ class Messages extends Component {
               loading: false,
               current_conversations_count: convos.length
               }
-            );
+            ),
+
+              //run analytics
+              Analytics.setAnalyticsCollectionEnabled(true);
+              Analytics.setCurrentScreen('Messages', 'Messages');
+              Analytics.setUserId(userId);
 
               //firebase ref to user obj
               firebaseProfileRef = firebase.database().ref('/users/' + userId);
@@ -269,31 +259,4 @@ class Messages extends Component {
   }
 }
 
-function bindAction(dispatch) {
-  return {
-    setIndex: index => dispatch(setIndex(index)),
-    openDrawer: () => dispatch(openDrawer())
-  };
-}
-const mapStateToProps = state => ({
-  name: state.user.name,
-  list: state.list.list
-});
-
-const MessagesSwagger = connect(mapStateToProps, bindAction)(Messages);
-const DrawNav = DrawerNavigator(
-  {
-    Home: { screen: MessagesSwagger }
-  },
-  {
-    contentComponent: props => <DrawBar {...props} />
-  }
-);
-const DrawerNav = null;
-DrawNav.navigationOptions = ({ navigation }) => {
-  DrawerNav = navigation;
-  return {
-    header: null
-  };
-};
-export default DrawNav;
+export default Messages;

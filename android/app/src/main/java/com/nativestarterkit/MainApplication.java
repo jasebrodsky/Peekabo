@@ -3,6 +3,8 @@ package com.nativestarterkit;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.microsoft.appcenter.reactnative.analytics.AppCenterReactNativeAnalyticsPackage;
+import com.microsoft.codepush.react.CodePush;
 import com.oblador.vectoricons.VectorIconsPackage;
 import com.RNFetchBlob.RNFetchBlobPackage;
 import com.reactlibrary.googlesignin.RNGoogleSignInPackage;
@@ -12,7 +14,6 @@ import com.reactnative.ivpusic.imagepicker.PickerPackage;
 import com.rnfs.RNFSPackage;
 import fr.bamlab.rnimageresizer.ImageResizerPackage;
 import com.imagepicker.ImagePickerPackage;
-import com.microsoft.codepush.react.CodePush;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
@@ -39,6 +40,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new AppCenterReactNativeAnalyticsPackage(MainApplication.this, getResources().getString(R.string.appCenterAnalytics_whenToEnableAnalytics)),
+            new CodePush(null, getApplicationContext(), BuildConfig.DEBUG),
             new VectorIconsPackage(),
             new RNFetchBlobPackage(),
             new RNGoogleSignInPackage(),
@@ -47,8 +50,7 @@ public class MainApplication extends Application implements ReactApplication {
             new PickerPackage(),
             new RNFSPackage(),
             new ImageResizerPackage(),
-            new ImagePickerPackage(),
-            new CodePush(null, getApplicationContext(), BuildConfig.DEBUG)
+            new ImagePickerPackage()
       );
     }
   };

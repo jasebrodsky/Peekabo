@@ -1,11 +1,9 @@
-
 import React, { Component } from 'react';
-import { connect } from "react-redux";
 import { Alert, ScrollView, TouchableOpacity, Image, ImageBackground, StyleSheet, Dimensions } from 'react-native';
+import RNfirebase from 'react-native-firebase';
 import * as firebase from "firebase";
 import { Modal } from 'react-native';
 import ImageViewer from 'react-native-image-zoom-viewer';
-import DrawBar from "../DrawBar";
 import FontAwesome, { Icons } from 'react-native-fontawesome';
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import {
@@ -28,7 +26,7 @@ import {
   Body,
   View, 
 } from "native-base";
-import { openDrawer } from "../../actions/drawer";
+
 import { GiftedChat } from 'react-native-gifted-chat';
 import TimerCountdown from 'react-native-timer-countdown'
 
@@ -66,22 +64,6 @@ class Chat extends Component {
     }
   }
 
-
-
-  static navigationOptions = ({ navigation }) => {
-    return {
-      title: `Welcome ${navigation.state.params.screen}`,
-    }
-  };
-  static propTypes = {
-    name: React.PropTypes.string,
-    setIndex: React.PropTypes.func,
-    list: React.PropTypes.arrayOf(React.PropTypes.string),
-    openDrawer: React.PropTypes.func
-  };
-
-
-
   //retrive msg from backend
   loadMessages(callback) {
     const { state, navigate } = this.props.navigation;
@@ -105,16 +87,12 @@ class Chat extends Component {
   }
 
 
-  CloseChat() {
-    if (this.messageRef) {
-      this.messageRef.off();
-    }
-  }
 
   componentWillMount() {
 
     const { state, navigate } = this.props.navigation;
     const userId = firebase.auth().currentUser.uid;
+    let Analytics = RNfirebase.analytics();
     let conversationId = state.params.match_id;
     let images = state.params.images; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
     let about = state.params.about; //might make more sense to pull from db instead of previous componnet, since now won't be able to deeplink into chat
@@ -212,7 +190,11 @@ class Chat extends Component {
             userIdMatch: participantUserId,
             images: imagesArray,
             removed: dataSnapshot.val().removed
-          })
+          }),
+          //run analytics
+            Analytics.setAnalyticsCollectionEnabled(true);
+            Analytics.setCurrentScreen('Chat', 'Chat');
+            Analytics.setUserId(userId);
 
       })
   }
@@ -222,6 +204,7 @@ class Chat extends Component {
 
     const { state, navigate } = this.props.navigation;
     conversationId = state.params.match_id;
+    let Analytics = RNfirebase.analytics();
 
     firebaseMessagesRef = firebase.database().ref('/conversations/'+conversationId+'/messages/');
     firebaseConversationsRef = firebase.database().ref('/conversations/'+conversationId+'/');
@@ -262,6 +245,13 @@ class Chat extends Component {
         });
 
     }
+
+    //Add event for message being sent here. 
+    Analytics.logEvent('chatSent', {
+      message: message,
+      blur: this.state.blur
+    });
+
   }
 
 
@@ -270,6 +260,11 @@ class Chat extends Component {
     this.setState({timeLeft:0}), navigate("Messages");
   }
 
+  CloseChat() {
+    if (this.messageRef) {
+      this.messageRef.off();
+    }
+  }
 
   expiredChat = () => {
 
@@ -299,6 +294,12 @@ class Chat extends Component {
         profileMaxHeight: "15%"
       });
     }
+
+    //Add event for message being sent here. 
+    Analytics.logEvent('profileViewChat', {
+      testParam: 'testParam',
+    });
+
   }
 
 
@@ -424,8 +425,13 @@ class Chat extends Component {
                         //add removed property to conversation as well. 
                         convoRef.update({removed: true});
 
-                        //navigate to messages. 
-                        navigate("Messages");
+                        //record in analytics that user was successfully blocked
+                        RNfirebase.analytics().logEvent('profileBlocked', {
+                          userId: userId
+                        }); 
+
+                        //navigate to swipes. 
+                        navigate("Swipes");
             
                       }else if ((buttonIndex) == 1){
                         //report user
@@ -442,7 +448,8 @@ class Chat extends Component {
                         ) 
 
                         //add removed property to conversation as well. 
-                        convoRef.update({reported: userId});                     
+                        convoRef.update({reported: userId}); 
+                
                       }
                     }
                   )}
@@ -512,10 +519,8 @@ class Chat extends Component {
     () => this.setState({
       timeLeft: undefined
     })
-    closeChat();
+    this.closeChat;
   }
-
-
 
 }
 
@@ -529,32 +534,5 @@ let styles = StyleSheet.create({
  }
 });
 
-function bindAction(dispatch) {
-  return {
-    setIndex: index => dispatch(setIndex(index)),
-    openDrawer: () => dispatch(openDrawer())
-  };
-}
-const mapStateToProps = state => ({
-  name: state.user.name,
-  list: state.list.list
-});
-
-const ChatSwagger = connect(mapStateToProps, bindAction)(Chat);
-const DrawNav = DrawerNavigator(
-  {
-    Home: { screen: ChatSwagger }
-  },
-  {
-    contentComponent: props => <DrawBar {...props} />
-  }
-);
-const DrawerNav = null;
-DrawNav.navigationOptions = ({ navigation }) => {
-  DrawerNav = navigation;
-  return {
-    header: null
-  };
-};
-export default DrawNav;
+export default Chat;
 

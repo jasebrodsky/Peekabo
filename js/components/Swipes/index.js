@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { connect } from "react-redux";
 import { Dimensions, ActivityIndicator, ImageBackground, TouchableOpacity, TouchableHighlight, Modal,ScrollView,StyleSheet,Share,Text,View,TouchableWithoutFeedback } from 'react-native'
-import DrawBar from "../DrawBar";
+import RNFirebase from "react-native-firebase";
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import ImageViewer from 'react-native-image-zoom-viewer';
@@ -29,8 +28,6 @@ import {
   Body
 } from "native-base";
 
-import { setIndex } from "../../actions/list";
-import { openDrawer } from "../../actions/drawer";
 
 class Swipes extends Component {
   
@@ -80,7 +77,7 @@ class Swipes extends Component {
     this.newBatch(userId);
 
     //query for logged in users information needed and set state with it.     
-    firebase.database().ref('/users/' + userId).on('value', ((snapshot) => {
+    firebase.database().ref('/users/' + userId).once('value', ((snapshot) => {
                 
         //set state with user data. 
         this.setState({ 
@@ -93,8 +90,11 @@ class Swipes extends Component {
             user_education: snapshot.val().education,
             user_work: snapshot.val().work,
             swipeCountStart: snapshot.val().swipe_count         
-            }
-          );
+        }),
+          RNFirebase.analytics().setAnalyticsCollectionEnabled(true);
+          RNFirebase.analytics().setCurrentScreen('Swipes', 'Swipes');
+          RNFirebase.analytics().setUserId(userId);
+
        })
       )
     }
@@ -103,11 +103,10 @@ class Swipes extends Component {
 
         firebase.database().ref('/matches/' + userId).orderByChild('unread_message').equalTo(true).on('value', ((chatSnapshot) => {
 
+         console.log('unread chats are: '+JSON.stringify(chatSnapshot.val())) ; 
           // if chat count is not empty, update state with count and set flag to true. Else, make sure to set flag to false. 
           if(chatSnapshot.val() !== null){
-       
-            
-            
+                   
             // chatArray = Object.entries(chatSnapshot).filter(function( obj ) {
             //     return obj.removed !== true;
             // });
@@ -117,10 +116,22 @@ class Swipes extends Component {
               unreadChatCount: Object.keys(chatSnapshot.toJSON()).length,
               showChatCount: true
             }) 
+          }else{
+            this.setState({
+              unreadChatCount: 0,
+              showChatCount: false
+            }) 
+
           }
         })
       )
     }
+
+
+  componentWillUnmount() {
+    //unmount listener for below ref
+    firebase.database().ref('/matches/' + userId).off('value');
+  }
 
   getMatches(userId) {
     fetch('https://us-central1-blurred-195721.cloudfunctions.net/getMatches?userid='+userId)
@@ -296,6 +307,11 @@ class Swipes extends Component {
             [match_id] : 'true'
         });
 
+        // let Analytics = RNFirebase.analytics();
+        RNFirebase.analytics().logEvent('matchEvent', {
+          match: userid_match.toString()
+        });
+
 
       }
     });
@@ -328,10 +344,15 @@ class Swipes extends Component {
 
     //if user is potential match, then 
       // create new match object
-      if (potential_match == true) { 
+      if ((potential_match == true) && (like == true)) { 
          //alert("save new match!");
          this.pushNewMatch(imagesObj, name_match, userid, userid_match, about_match, birthday_match, gender_match, city_state_match, education_match, work_match);
       }
+
+        // let Analytics = RNFirebase.analytics();
+        RNFirebase.analytics().logEvent('swipeEvent', {
+          like: like.toString()
+        });
 
   }
 
@@ -393,7 +414,12 @@ class Swipes extends Component {
         profileMaxHeight: "15%"
       });
     }
-  }
+
+    //record in analytics that user was successfully viewed a profile
+    RNfirebase.analytics().logEvent('profileViewSwipes', {
+      testParam: 'testParamValue1'
+    });
+}
 
   //handle swipe events
   onSwiped = (cardIndex, direction) => {
@@ -720,46 +746,9 @@ class Swipes extends Component {
                 </View>          
           </Modal> 
 
-
-
-
-
-
-
-
-
-
-
       </Container>
     )
   }
 }
 
-function bindAction(dispatch) {
-  return {
-    setIndex: index => dispatch(setIndex(index)),
-    openDrawer: () => dispatch(openDrawer())
-  };
-}
-const mapStateToProps = state => ({
-  name: state.user.name,
-  list: state.list.list
-});
-
-const SwipesSwagger = connect(mapStateToProps, bindAction)(Swipes);
-const DrawNav = DrawerNavigator(
-  {
-    Home: { screen: SwipesSwagger }
-  },
-  {
-    contentComponent: props => <DrawBar {...props} />
-  }
-);
-const DrawerNav = null;
-DrawNav.navigationOptions = ({ navigation }) => {
-  DrawerNav = navigation;
-  return {
-    header: null
-  };
-};
-export default DrawNav;
+export default Swipes;

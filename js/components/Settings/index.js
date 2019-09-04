@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
-import { connect } from "react-redux";
 import { AsyncStorage, Image, ImageBackground, Alert, Dimensions, Modal, StyleSheet, ScrollView, FlatList, Platform, Slider, TouchableOpacity } from 'react-native';
 import RNfirebase from 'react-native-firebase';
-import DrawBar from "../DrawBar";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
 import DatePicker from 'react-native-datepicker';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -41,11 +39,8 @@ import {
   View
 } from "native-base";
 
-import { setIndex } from "../../actions/list";
-import { openDrawer } from "../../actions/drawer";
-
 //shortcut to Analytics
-let Analytics = RNfirebase.analytics();
+// let Analytics = RNfirebase.analytics();
 
 var PHOTO_OPTIONS = [
   'View photo',  
@@ -75,7 +70,7 @@ class Settings extends Component {
 
   constructor(props){
     super(props)
-    Analytics.setAnalyticsCollectionEnabled(true);
+    //Analytics.setAnalyticsCollectionEnabled(true);
 
   this.state = {
       imageViewerVisible: false,
@@ -106,72 +101,56 @@ class Settings extends Component {
 
   }
   
-  static navigationOptions = ({ navigation }) => {
-    return {
-      title: null,
-    }
-  };
-  static propTypes = {
-    first_name: React.PropTypes.string,
-    setIndex: React.PropTypes.func,
-    list: React.PropTypes.arrayOf(React.PropTypes.string),
-    openDrawer: React.PropTypes.func
-  };
 
   //before component mounts, update state with value from database
   componentWillMount() {
+
     //save data snapshot from firebaseRef
     firebaseRef.on('value', (dataSnapshot) => {
       //update sate with value from dataSnapShot. 
       this.setState({
         profile: dataSnapshot.val()
-      });
+      }),
+
+    RNfirebase.analytics().setAnalyticsCollectionEnabled(true);
+    RNfirebase.analytics().setCurrentScreen('Settings', 'Settings');
+    RNfirebase.analytics().setUserId(userId);
+    //trigger these user property functions when user updates each of their settings
+    RNfirebase.analytics().setUserProperty('name', dataSnapshot.val().first_name+' '+dataSnapshot.val().last_name);
+    RNfirebase.analytics().setUserProperty('about', dataSnapshot.val().about);
+    RNfirebase.analytics().setUserProperty('birthday', dataSnapshot.val().birthday);
+    RNfirebase.analytics().setUserProperty('education', dataSnapshot.val().education);
+    RNfirebase.analytics().setUserProperty('gender', dataSnapshot.val().gender);
+    RNfirebase.analytics().setUserProperty('gender_pref', dataSnapshot.val().gender_pref);
+    RNfirebase.analytics().setUserProperty('interested', dataSnapshot.val().interested);
+    RNfirebase.analytics().setUserProperty('status', dataSnapshot.val().status);
+    RNfirebase.analytics().setUserProperty('work', dataSnapshot.val().work);
+   //convert the below numbers to strings
+    RNfirebase.analytics().setUserProperty('last_conversation_count', dataSnapshot.val().last_conversation_count.toString());
+    RNfirebase.analytics().setUserProperty('swipe_count', dataSnapshot.val().swipe_count.toString());
+    RNfirebase.analytics().setUserProperty('max_age', dataSnapshot.val().max_age.toString());
+    RNfirebase.analytics().setUserProperty('max_distance', dataSnapshot.val().max_distance.toString());
+    RNfirebase.analytics().setUserProperty('min_age', dataSnapshot.val().min_age.toString());
+    RNfirebase.analytics().setUserProperty('last_login', dataSnapshot.val().last_login.toString());
+    RNfirebase.analytics().setUserProperty('last_swipe_sesh_date', dataSnapshot.val().last_swipe_sesh_date.toString());
+    RNfirebase.analytics().setUserProperty('notifications_match', dataSnapshot.val().notifications_match.toString());
+    RNfirebase.analytics().setUserProperty('notifications_message', dataSnapshot.val().notifications_message.toString());
     })
 
-    this.getLocation()
+    this.getLocation();
 
   }  
 
   //After component mounts prompt for permission to recieve notifications and save fcmToken to database
   componentDidMount() {
     this.checkPermission();
-
-    
-    this.runAnalytics()
-
   }  
 
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchId);
-    firebaseRef.off();
-    //alert('component unmounted');
+    firebaseRef.off(); //detach listener to ref, so that extra fbdb calls arent' made and unmounted component isn't updated
   }
 
-
-  async runAnalytics () {
-
-    Analytics.setCurrentScreen('settings_screen', 'Settings');
-    //console.log('userid is: '+JSON.stringify(this.state.profile.userid));
-    Analytics.setUserId(this.state.profile.userid);
-    Analytics.setUserProperty('name', this.state.profile.first_name+' '+this.state.profile.last_name);
-    Analytics.setUserProperty('about', this.state.profile.about);
-    Analytics.setUserProperty('birthday', this.state.profile.birthday);
-    Analytics.setUserProperty('education', this.state.profile.education);
-    Analytics.setUserProperty('gender', this.state.profile.gender);
-    Analytics.setUserProperty('gender_pref', this.state.profile.gender_pref);
-    Analytics.setUserProperty('interested', this.state.profile.interested);
-    Analytics.setUserProperty('last_conversation_count', this.state.profile.last_conversation_count);
-    Analytics.setUserProperty('last_login', this.state.profile.last_login);
-    Analytics.setUserProperty('last_swipe_sesh_date', this.state.profile.last_swipe_sesh_date);
-    Analytics.setUserProperty('max_age', this.state.profile.max_age);
-    Analytics.setUserProperty('max_distance', this.state.profile.max_distance);
-    Analytics.setUserProperty('min_age', this.state.profile.min_age);
-    Analytics.setUserProperty('notifications_match', this.state.profile.notifications_match);
-    Analytics.setUserProperty('notifications_message', this.state.profile.notifications_message);
-    Analytics.setUserProperty('status', this.state.profile.status);
-    Analytics.setUserProperty('swipe_count', this.state.profile.swipe_count);
-    Analytics.setUserProperty('work', this.state.profile.work);
-  }
 
   // check if permission for notification has been granted previously, then getToken. 
   async checkPermission() {
@@ -230,6 +209,9 @@ class Settings extends Component {
     //take opposite of current value from state
     let bool = this.state.profile.notifications_message == true ? false : true;
 
+    //record in analytics that user was doesn't want notifications 
+    RNfirebase.analytics().setUserProperty('notifications_message', this.state.profile.notifications_message.toString());
+
     //update firebase with new value, then update state
     firebaseRef.update({notifications_message: bool})
     .then(this.setState({profile: { ...this.state.profile, notifications_message: bool}}))
@@ -240,6 +222,9 @@ class Settings extends Component {
 
     //take opposite of current value from state
     let bool = this.state.profile.notifications_match == true ? false : true;
+
+    //record in analytics that user was doesn't want notifications 
+    RNfirebase.analytics().setUserProperty('notifications_match', this.state.profile.notifications_match.toString());
 
     //update firebase with new value, then update state
     firebaseRef.update({notifications_match: bool})
@@ -311,6 +296,10 @@ class Settings extends Component {
       const { state, navigate } = this.props.navigation;
 
       try {
+          //record in analytics that user was logged out successfully 
+          RNfirebase.analytics().logEvent('userLoggedOut', {
+            testParam: 'testParamValue1'
+          });
           navigate("Login");
           await firebase.auth().signOut();
       } catch (e) {
@@ -324,10 +313,24 @@ class Settings extends Component {
   getMeters = (i) => i*1609.344;
 
   //function to pause user in db
-  pauseUser = () => firebaseRef.update({status: 'paused'});
+  pauseUser = () => firebaseRef.update({status: 'paused'})
+  .then(
+    //record in analytics that user was paused successfully 
+    RNfirebase.analytics().logEvent('userPaused', {
+      testParam: 'testParamValue1'
+    })
+  );
+
+
 
   //function to resume user in db
-  resumeUser = () => firebaseRef.update({status: 'active'});
+  resumeUser = () => firebaseRef.update({status: 'active'})
+  .then(
+    //record in analytics that user was resumed successfully 
+    RNfirebase.analytics().logEvent('userResumed', {
+      testParam: 'testParamValue1'
+    })
+  );
 
   //function to guide user through the delete flow
   deleteUser = async () => {
@@ -354,6 +357,12 @@ class Settings extends Component {
         //set user to deleted status in db, then delete authentication, then go to login page. 
         firebaseRef.update({status: 'deleted'}).then(function() {
           user.delete().then(function() {
+
+          //record in analytics that user was deleted successfully 
+          RNfirebase.analytics().logEvent('userDeleted', {
+            testParam: 'testParamValue1'
+          });
+
           // User deleted.
           navigate("Login");
 
@@ -457,6 +466,10 @@ class Settings extends Component {
               console.log(error);
             })  
 
+              //record in analytics that photo was successfully uploaded 
+              RNfirebase.analytics().logEvent('photoUploaded', {
+                imageCount: image_item_count_start
+              });
 
               return imagesRef.getDownloadURL()
             })               
@@ -483,6 +496,7 @@ class Settings extends Component {
         } 
       ).catch(e => console.log(e));
     }else{
+
       Alert.alert('Sorry','Please delete a photo first');
     }
 
@@ -534,14 +548,11 @@ class Settings extends Component {
                             
                             //console.log('main image before splice is: '+JSON.stringify(main_image));
 
-
-
                             //remove image at index
                             arrayImages.splice(key, 1);
                             //console.log('profile images after splice: '+JSON.stringify(arrayImages));
 
                             //console.log('main image after splice is: '+JSON.stringify(main_image));
-
 
 
                             //insert new main image into first position of profile images
@@ -553,6 +564,11 @@ class Settings extends Component {
 
                             //multi-path update with new array of images
                             this.updateData('images', userId, this.state.profile.images );
+
+                            //record in analytics that photo was successfully swapped 
+                            RNfirebase.analytics().logEvent('newMainPhoto', {
+                              testParam: 'testParam'
+                            });
                           }
 
                           if ((buttonIndex) === 2) {
@@ -608,6 +624,11 @@ class Settings extends Component {
 
                               //multi-path update with new array of images
                               this.updateData('images', userId, this.state.profile.images );
+
+                              //record in analytics that photo was deleted successfully 
+                              RNfirebase.analytics().logEvent('photoDeleted', {
+                                testParam: 'testParamValue1'
+                              });
 
                             }
                           }
@@ -779,7 +800,7 @@ class Settings extends Component {
 
   _handleClick = (e) => {
 
-    alert('sup playa');
+    console.log('_handleClick called');
   }
 
 
@@ -1145,34 +1166,8 @@ class Settings extends Component {
   }
 }
 
-function bindAction(dispatch) {
-  return {
-    setIndex: index => dispatch(setIndex(index)),
-    openDrawer: () => dispatch(openDrawer())
-  };
-}
-const mapStateToProps = state => ({
-  name: state.user.name,
-  list: state.list.list
-});
 
-const SettingsSwagger = connect(mapStateToProps, bindAction)(Settings);
-const DrawNav = DrawerNavigator(
-  {
-    Home: { screen: SettingsSwagger }
-  },
-  {
-    contentComponent: props => <DrawBar {...props} />
-  }
-);
-const DrawerNav = null;
-DrawNav.navigationOptions = ({ navigation }) => {
-  DrawerNav = navigation;
-  return {
-    header: null
-  };
-};
-export default DrawNav;
+export default Settings;
 
 
 

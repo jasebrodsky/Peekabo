@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { connect } from "react-redux";
 import { ActivityIndicator, StyleSheet, AlertIOS, Share } from 'react-native';
-import DrawBar from "../DrawBar";
 import FontAwesome, { Icons } from 'react-native-fontawesome';
+import RNfirebase from 'react-native-firebase';
+
 import AppIntroSlider from 'react-native-app-intro-slider';
 import * as firebase from "firebase";
 import { DrawerNavigator, NavigationActions } from "react-navigation";
@@ -16,9 +16,6 @@ import {
   Body,
   View
 } from "native-base";
-import { setIndex } from "../../actions/list";
-import { openDrawer } from "../../actions/drawer";
-
 
 const styles = StyleSheet.create({
   buttonCircle: {
@@ -81,8 +78,8 @@ const slidesMale = [
     key: '1',
     title: 'Welcome to Helm',
     text: 'Dating for the modern people.',
-    //image: require('./assets/banner-welcome.jpg'),
-    image: {uri: 'https://edmullen.net/test/rc.jpg', cache: 'force-cache'},
+    image: require('./assets/banner-welcome.jpg'),
+    //image: {uri: 'https://edmullen.net/test/rc.jpg', cache: 'force-cache'},
     imageStyle: styles.image,
     backgroundColor: '#22bcb5',
   },
@@ -121,17 +118,14 @@ class Intro extends Component {
       title: null,
     }
   };
-  static propTypes = {
-    name: React.PropTypes.string,
-    setIndex: React.PropTypes.func,
-    list: React.PropTypes.arrayOf(React.PropTypes.string),
-    openDrawer: React.PropTypes.func
-  };
+
   
 
   componentWillMount() {
 
     const userId = firebase.auth().currentUser.uid;
+    const route = this.props.navigation.state.routeName;
+
 
     //query for logged in users information needed and set state with it.     
     firebase.database().ref('/users/' + userId).once('value', ((userSnap) => {
@@ -140,9 +134,22 @@ class Intro extends Component {
       this.setState({ 
         userId: userId,
         gender: userSnap.val().gender,
-      });
-    }))
+      })
+      
+
+      // // let Analytics = RNFirebase.analytics();
+      // RNFirebase.analytics().logEvent('swipeEvent', {
+      //   like: like.toString()
+      // });
+
+    })), 
+
+      RNfirebase.analytics().setAnalyticsCollectionEnabled(true);
+      RNfirebase.analytics().setUserId(userId);
+      RNfirebase.analytics().setCurrentScreen('Intro', 'Intro');
+    
   }
+
 
 
   //Share function when sharing referral code native share functionality. 
@@ -163,9 +170,16 @@ class Intro extends Component {
           url: 'https://helmdating.com/invited.html',
           title: 'Wow, have you seen this yet?'
         }).then(({action, activityType}) => {
+
+          let Analytics = RNfirebase.analytics();
           if(action === Share.dismissedAction) {
             //delete unsent code from db
             firebase.database().ref('codes/' + codeDelete).remove();
+
+            //record in analytics that share was dismissed 
+            Analytics.logEvent('shareDialogDismissed', {
+              testParam: 'testParamValue1'
+            });
 
             //redirect to settings component
             const { navigate } = this.props.navigation;
@@ -174,6 +188,12 @@ class Intro extends Component {
           } 
           else {
             console.log('Share successful');
+           
+            //record in analytics that share was dismissed 
+            Analytics.logEvent('shareDialogSent', {
+              testParam: 'testParamValue1'
+            });
+
             //redirect to settings component
             const { navigate } = this.props.navigation;
             navigate("Settings");
@@ -189,7 +209,8 @@ class Intro extends Component {
   
   //check code is valid
   _checkCode = (userCode) => {
-
+    //save analytics in let
+    let Analytics = RNfirebase.analytics();
     //call firebase if code exists and is not expired
     firebase.database().ref("/codes").orderByChild("sharable_code").equalTo(userCode).once("value",codeSnap => {
         //check if code exists
@@ -206,12 +227,25 @@ class Intro extends Component {
 
             //handle that code is expired. 
             console.log('sorry code is expired already. Ask your friend for another.');
+            
+            //record in analytics that code was expired 
+            Analytics.logEvent('codeExpired', {
+              codeData: 'codeData'
+            });
+
             AlertIOS.alert('Whoops!','Code: '+userCode+' has already been used. Please ask your friend for another.');
+
           }else{
             const { navigate } = this.props.navigation;
    
             //code must exist AND code not expired
             console.log('code exists and is valid!');
+            
+            //record in analytics that code was expired 
+            Analytics.logEvent('codeValid', {
+              codeData: 'codeData'
+            });
+
             //update code to expired at the specific code key and redirect to settings
             firebase.database().ref('/codes/'+key).update({expired_date: new Date().getTime(), expired: true});
             
@@ -234,7 +268,10 @@ class Intro extends Component {
 
           //handle that code doesnt exist. 
           console.log('sorry code doesnt exist. ask your friend for another');
-          
+           //record in analytics that code was expired 
+          Analytics.logEvent('codeInvalid', {
+            codeData: 'codeData'
+          });         
           //AlertIOS.alert('Whoops!','Code: '+userCode+' does not exist. Please ask your friend for another.');
 
           //let people in for testing
@@ -250,9 +287,6 @@ class Intro extends Component {
                 },
               ],
             );
-
-
-
         }
     });
   }
@@ -291,40 +325,14 @@ class Intro extends Component {
     const { navigate } = this.props.navigation;
     const slides = (this.state.gender == 'male') ? slidesMale : slidesFemale;      
     const doneLabel = (this.state.gender == 'male') ? 'Enter code' : 'Invite and continue';      
-
+    
+    
     return <AppIntroSlider 
       slides={slides} 
       doneLabel={doneLabel}
-      bottomButton = {true}
+      bottomButton={true}
       onDone={this._onDone}/>;
   }
 }
 
-function bindAction(dispatch) {
-  return {
-    setIndex: index => dispatch(setIndex(index)),
-    openDrawer: () => dispatch(openDrawer())
-  };
-}
-const mapStateToProps = state => ({
-  name: state.user.name,
-  list: state.list.list
-});
-
-const IntroSwagger = connect(mapStateToProps, bindAction)(Intro);
-const DrawNav = DrawerNavigator(
-  {
-    Home: { screen: IntroSwagger }
-  },
-  {
-    contentComponent: props => <DrawBar {...props} />
-  }
-);
-const DrawerNav = null;
-DrawNav.navigationOptions = ({ navigation }) => {
-  DrawerNav = navigation;
-  return {
-    header: null
-  };
-};
-export default DrawNav;
+export default Intro;

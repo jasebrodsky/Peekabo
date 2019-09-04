@@ -50,6 +50,9 @@ exports.getCode = functions.https.onRequest((req, res) => {
 //function to send notification when message is recieved. 
 exports.notifyNewMessage = functions.database.ref('/conversations/{conversationId}/messages/{messageId}').onCreate((snap, context) => {
   
+  console.log('trigged message notification');
+
+
   //save data of message
   const message = snap.val();
   const senderName = message.user._name;

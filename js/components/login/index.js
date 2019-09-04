@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { ImageBackground, Image } from "react-native";
-import { connect } from "react-redux";
+import RNfirebase from 'react-native-firebase';
 import * as firebase from "firebase";
 import Geocoder from 'react-native-geocoding';
 import FontAwesome, { Icons } from 'react-native-fontawesome';
@@ -15,8 +15,6 @@ import {
   Text
 } from "native-base";
 
-import { Field, reduxForm } from "redux-form";
-import { setUser } from "../../actions/user";
 import styles from "./styles";
 import { AccessToken, LoginManager, GraphRequest, GraphRequestManager } from 'react-native-fbsdk';
 
@@ -331,17 +329,5 @@ onLoginOrRegister = () => {
     );
   }
 }
-const LoginSwag = reduxForm(
-  {
-    form: "test",
-  },
-  function bindActions(dispatch) {
-    return {
-      setUser: name => dispatch(setUser(name))
-    };
-  }
-)(Login);
-LoginSwag.navigationOptions = {
-  header: null
-};
-export default LoginSwag;
+
+export default Login;
