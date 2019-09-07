@@ -313,24 +313,11 @@ class Settings extends Component {
   getMeters = (i) => i*1609.344;
 
   //function to pause user in db
-  pauseUser = () => firebaseRef.update({status: 'paused'})
-  .then(
-    //record in analytics that user was paused successfully 
-    RNfirebase.analytics().logEvent('userPaused', {
-      testParam: 'testParamValue1'
-    })
-  );
-
-
+  pauseUser = () => this.updateData('status', userId, 'paused');
 
   //function to resume user in db
-  resumeUser = () => firebaseRef.update({status: 'active'})
-  .then(
-    //record in analytics that user was resumed successfully 
-    RNfirebase.analytics().logEvent('userResumed', {
-      testParam: 'testParamValue1'
-    })
-  );
+  resumeUser = () => this.updateData('status', userId, 'active');
+
 
   //function to guide user through the delete flow
   deleteUser = async () => {
@@ -651,7 +638,15 @@ class Settings extends Component {
 
   //function to update name or images
   updateData = (type, userid, payload) => {
-          
+
+    //record in analytics the event that a profile was updated successfully 
+    RNfirebase.analytics().logEvent('profileUpdated', {
+      type: payload
+    });
+
+    //record in analytics the updated user property 
+    RNfirebase.analytics().setUserProperty(type, payload);
+   
     //create ref to list of coversations for userid
     const userConversations = firebase.database().ref('users/'+userid+'/conversations/');
 
@@ -721,6 +716,9 @@ class Settings extends Component {
               case 'education':
                 updateObj[`matches/${key}/${userid}/education`] = payload;
                 break;
+              case 'status':
+                updateObj[`matches/${key}/${userid}/status`] = payload;
+                break;
             }
           });
         }
@@ -737,9 +735,13 @@ class Settings extends Component {
           case 'about':
             updateObj[`users/${userid}/about`] = payload;
             break;
+          case 'status':
+            updateObj[`users/${userid}/status`] = payload;
+            break;
         }
       }).then(function(){
           //console.log('updateObj outside .then function: '+JSON.stringify(updateObj));
+          
           //return statement with updating all the paths that need to be updated
           return firebase.database().ref().update(updateObj);
       })

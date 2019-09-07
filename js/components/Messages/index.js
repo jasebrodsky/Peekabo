@@ -146,9 +146,11 @@ class Messages extends Component {
             let timeRemaining =  86000000 - (this.state.currentDate.getTime() - matchDate);
             let matchState = (timeRemaining > 0) ? 'active' : 'expired';
             let matchRemoved = item.toJSON().removed;
+            let matchStatus = item.toJSON().status;
+            
 
             //remove matches that have been removed by match
-            if(matchRemoved !== true){
+            if((matchRemoved !== true) && matchStatus !== 'paused'){
                convos.push(item);
             }
 
