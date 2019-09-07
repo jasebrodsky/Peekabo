@@ -302,6 +302,54 @@ class Chat extends Component {
 
   }
 
+  //function to block or report a profile
+  blockOrReport = (type) => {
+
+    //create ref to set new match object with match_id associated with conversation_id generated above. 
+    let matchesRef1 = firebase.database().ref('matches/'+userId+'/'+this.state.userIdMatch+'/');
+
+    //create ref to set new match object with match_id associated with conversation_id generated above. 
+    let matchesRef2 = firebase.database().ref('matches/'+this.state.userIdMatch+'/'+userId+'/');
+
+    //save fb ref for quering conversation data
+    let convoRef = firebase.database().ref('/conversations/'+conversationId+'/');
+
+    //prepare for navigation  
+    const { navigate } = this.props.navigation;
+
+    //add removed property to match
+    matchesRef1.update({removed: true});
+
+    //add removed property to match
+    matchesRef2.update({removed: true});
+
+    //add removed property to conversation as well. 
+    convoRef.update({removed: true});
+
+    //record in analytics that user was successfully blocked
+    RNfirebase.analytics().logEvent('profileBlocked', {
+      userIdBlocking: userId,
+      userIdBlocked: this.state.userIdMatch
+    }); 
+
+    //if type is report
+    if (type == 'report'){
+      console.log('profile reported');
+
+      //add reported property to conversation as well. 
+      convoRef.update({reported: userId}); 
+
+      //record in analytics that user was successfully reported
+      RNfirebase.analytics().logEvent('profileReported', {
+        userIdReporting: userId,
+        userIdReported: this.state.userIdMatch
+      }); 
+    }
+
+    //navigate to swipes. 
+    navigate("Swipes");
+  }
+
 
   getAge(dateString) {
       var today = new Date();
@@ -402,53 +450,23 @@ class Chat extends Component {
                     },
                     buttonIndex => {
 
-                      //create ref to set new match object with match_id associated with conversation_id generated above. 
-                      let matchesRef1 = firebase.database().ref('matches/'+userId+'/'+this.state.userIdMatch+'/');
-
-                      //create ref to set new match object with match_id associated with conversation_id generated above. 
-                      let matchesRef2 = firebase.database().ref('matches/'+this.state.userIdMatch+'/'+userId+'/');
-
-                      //save fb ref for quering conversation data
-                      let convoRef = firebase.database().ref('/conversations/'+conversationId+'/');
-
-                      //prepare for navigation  
-                      const { navigate } = this.props.navigation;
-
+                      //handle blocking profile
                       if ((buttonIndex) == 0){
-                         
-                        //add removed property to match
-                        matchesRef1.update({removed: true});
+                        this.blockOrReport();
 
-                        //add removed property to match
-                        matchesRef2.update({removed: true});
-
-                        //add removed property to conversation as well. 
-                        convoRef.update({removed: true});
-
-                        //record in analytics that user was successfully blocked
-                        RNfirebase.analytics().logEvent('profileBlocked', {
-                          userId: userId
-                        }); 
-
-                        //navigate to swipes. 
-                        navigate("Swipes");
-            
+                      //handle block and report a user
                       }else if ((buttonIndex) == 1){
-                        //report user
 
                         Alert.alert(
                           'Report & Block',
                           'We take reports seriously and will investigate this person as well as block them from interacting with you in the future. If you just want to unmatch tap "unmatch" instead.',
                           [
-                            {text: 'Unmatch', onPress: () => console.log('Ask me later pressed')},
+                            {text: 'Unmatch', onPress: () => this.blockOrReport()},
                             {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
-                            {text: 'Report & Block', onPress: () => console.log('report Pressed')},
+                            {text: 'Report & Block', onPress: () => this.blockOrReport('report')},
                           ],
                           { cancelable: false }
                         ) 
-
-                        //add removed property to conversation as well. 
-                        convoRef.update({reported: userId}); 
                 
                       }
                     }
