@@ -296,7 +296,7 @@ class Chat extends Component {
     }
 
     //Add event for message being sent here. 
-    Analytics.logEvent('profileViewChat', {
+    RNfirebase.analytics().logEvent('profileViewChat', {
       testParam: 'testParam',
     });
 
@@ -395,8 +395,8 @@ class Chat extends Component {
                 index = {this.state.imageIndex}
                 imageUrls={this.state.images}
                 onChange = {(index) => this.setState({ imageIndex: index})}
-                onSwipeDown = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: 66, imageIndex: this.state.imageIndex})}
-                onClick = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: 66})}
+                onSwipeDown = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: '15%', imageIndex: this.state.imageIndex})}
+                onClick = {() => this.setState({ imageViewerVisible: false, profileMaxHeight: '15%'})}
               />
 
                 <View 
@@ -420,6 +420,7 @@ class Chat extends Component {
                         <View>                        
                           <Text style={{fontWeight: "bold"}} >{name}</Text>                      
                           <Text>{age}, {gender}, {city_state}</Text>
+                          <Text>{education}</Text>
                           <Text style={{marginBottom: 15}} note>{work}</Text>
                           <Text note>{about}</Text>                   
                         </View>

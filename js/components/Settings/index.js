@@ -735,6 +735,12 @@ class Settings extends Component {
           case 'about':
             updateObj[`users/${userid}/about`] = payload;
             break;
+          case 'work':
+            updateObj[`users/${userid}/work`] = payload;
+            break;
+          case 'education':
+            updateObj[`users/${userid}/education`] = payload;
+            break;
           case 'status':
             updateObj[`users/${userid}/status`] = payload;
             break;
@@ -960,6 +966,7 @@ class Settings extends Component {
                 <Label>Work</Label>
                 <Input 
                   value={this.state.profile.work}
+                  placeholder='I work at ...'
                   onChangeText={(newwork) => this.setState({
                                 profile: { ...this.state.profile, work: newwork}
                               })}                  
@@ -972,12 +979,13 @@ class Settings extends Component {
               <Item fixedLabel>
                 <Label>Education</Label>
                 <Input 
+
+                  placeholder='My education is ...'
                   value={this.state.profile.education}
                   onChangeText={(neweducation) => this.setState({
                                 profile: { ...this.state.profile, education: neweducation}
                               })}                  
-                  onEndEditing={(e: any) => firebaseRef.update({education: e.nativeEvent.text})}
-                  onEndEditing={(e: any) => this.updateData('education', userId, e.nativeEvent.text)}
+                  onEndEditing={(e: any) => this.updateData('education', userId, e.nativeEvent.text)}             
 
                 />
               </Item>
@@ -986,6 +994,7 @@ class Settings extends Component {
                 <Input 
                   style={{minHeight: 50, height: '100%', maxHeight: 150}}
                   multiline={true}
+                  placeholder='I am great because ...'
                   onContentSizeChange={(e) => console.log('updated size')}
                   value={this.state.profile.about}
                   onChangeText={(about) => this.setState({
