@@ -164,7 +164,7 @@ getLocation = (userId) => {
 
 onLoginOrRegister = () => {
   const { navigate } = this.props.navigation;
-  LoginManager.logInWithReadPermissions(['public_profile', 'email', 'user_location', 'user_hometown', 'user_birthday'])
+  LoginManager.logInWithReadPermissions(['public_profile', 'email', 'user_birthday'])
     .then((result) => {
 
       if (result.isCancelled) {
@@ -216,9 +216,11 @@ onLoginOrRegister = () => {
                   let gender = (fb_result.gender == null) ? 'Select' : fb_result.gender;
                   let birthday = (fb_result.birthday == null) ? 'Select' : fb_result.birthday; 
                   largePhotoURL = "https://graph.facebook.com/"+fb_result.id+"/picture?width=600&height=800";
-                  let location = fb_result.location; //gets the location object you get from your response now
-                  // let latitude = location.latitude == null? '': location.latitude;             
-                  // let longitude = location.longitude == null? '': location.longitude;   
+                  let location = (fb_result.location == null) ? 'Select' : fb_result.location; ////gets the location object you get from your response now
+                  let latitude = 40.759211;
+                  let longitude = -73.984638;
+                  let city_state = 'New York City';
+
                   let database = firebase.database();
 
                   // FB.api('/' + location.id, {
@@ -243,9 +245,9 @@ onLoginOrRegister = () => {
                     last_login: Date.now(),
                     swipe_count: 0,
                     last_swipe_sesh_date: Date.now(),
-                    // latitude: latitude,
-                    // longitude: longitude,
-                    city_state: fb_result.location.name,
+                    latitude: latitude,
+                    longitude: longitude,
+                    city_state: city_state,
                     gender: gender,
                     gender_pref: gender+'straight',
                     birthday: fb_result.birthday,
@@ -264,6 +266,7 @@ onLoginOrRegister = () => {
                     error: null,
                     //religion: fb_result.religion,
                     //political: fb_result.political,
+                    //hometown: fb_resutl.hometown
                   }, function(error) {
                     if (error) {
                       console.log("Data could not be saved." + error);
@@ -282,7 +285,7 @@ onLoginOrRegister = () => {
                   accessToken: accessToken,
                   parameters: {
                     fields: {
-                      string: 'email,gender,name,first_name,last_name,birthday,location,hometown'
+                      string: 'email,gender,name,first_name,last_name,birthday'
                     }
                   }
                 },

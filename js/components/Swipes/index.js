@@ -95,6 +95,8 @@ class Swipes extends Component {
           RNFirebase.analytics().setCurrentScreen('Swipes', 'Swipes');
           RNFirebase.analytics().setUserId(userId);
 
+          console.log('snapshot.val().swipe_count is: '+snapshot.val().swipe_count);
+
        })
       )
     }
@@ -137,7 +139,9 @@ class Swipes extends Component {
     fetch('https://us-central1-blurred-195721.cloudfunctions.net/getMatches?userid='+userId)
       .then((response) => response.json())
       .then((responseJson) => {
-                
+        
+        console.log('responseJson is: '+JSON.stringify(responseJson));
+
         // for each match userid inside responeJson
         let promises = responseJson.map((match) => {
           
@@ -483,6 +487,7 @@ class Swipes extends Component {
     //save flag that user has now seen their daily match.
     let userRef = firebase.database().ref('users/'+this.state.userId+'/');
 
+    console.log('swipecountstart is: '+this.state.swipeCountStart + 'card index is: '+ this.state.cardIndex);
     //update swipe count in db in order to compute remaining matches. 
     userRef.update({
       swipe_count: this.state.swipeCountStart + this.state.cardIndex,

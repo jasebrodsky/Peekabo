@@ -485,7 +485,7 @@
 		128931576551B35BC78113F9 /* Pods-Blured.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Blured.release.xcconfig"; path = "Pods/Target Support Files/Pods-Blured/Pods-Blured.release.xcconfig"; sourceTree = "<group>"; };
 		139105B61AF99BAD00B5F7CC /* RCTSettings.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTSettings.xcodeproj; path = "../node_modules/react-native/Libraries/Settings/RCTSettings.xcodeproj"; sourceTree = "<group>"; };
 		139FDEE61B06529A00C62182 /* RCTWebSocket.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTWebSocket.xcodeproj; path = "../node_modules/react-native/Libraries/WebSocket/RCTWebSocket.xcodeproj"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* Blured.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blured.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* Blured.temp_caseinsensitive_rename.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blured.temp_caseinsensitive_rename.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = NativeStarterKit/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = NativeStarterKit/AppDelegate.m; sourceTree = "<group>"; };
 		13B07FB21A68108700A75B9A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -978,7 +978,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* Blured.app */,
+				13B07F961A680F5B00A75B9A /* Blured.temp_caseinsensitive_rename.app */,
 				00E356EE1AD99517003FC87E /* BluredTests.xctest */,
 				2D02E47B1E0B4A5D006451C7 /* Blured-tvOS.app */,
 				2D02E4901E0B4A5D006451C7 /* Blured-tvOSTests.xctest */,
@@ -1097,7 +1097,7 @@
 			);
 			name = Blured;
 			productName = "Hello World";
-			productReference = 13B07F961A680F5B00A75B9A /* Blured.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* Blured.temp_caseinsensitive_rename.app */;
 			productType = "com.apple.product-type.application";
 		};
 		2D02E47A1E0B4A5D006451C7 /* Blured-tvOS */ = {
@@ -1907,7 +1907,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.app/Blured";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.temp_caseinsensitive_rename.app/Blured.temp_caseinsensitive_rename";
 			};
 			name = Debug;
 		};
@@ -1946,7 +1946,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.app/Blured";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.temp_caseinsensitive_rename.app/Blured.temp_caseinsensitive_rename";
 			};
 			name = Release;
 		};
@@ -1989,7 +1989,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_NAME = Blured;
+				PRODUCT_NAME = Blured.temp_caseinsensitive_rename;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -2034,7 +2034,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_NAME = Blured;
+				PRODUCT_NAME = Blured.temp_caseinsensitive_rename;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -2155,7 +2155,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = appletvos;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured-tvOS.app/Blured-tvOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.temp_caseinsensitive_rename-tvOS.app/Blured.temp_caseinsensitive_rename-tvOS";
 				TVOS_DEPLOYMENT_TARGET = 10.1;
 			};
 			name = Debug;
@@ -2182,7 +2182,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = appletvos;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured-tvOS.app/Blured-tvOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Blured.temp_caseinsensitive_rename-tvOS.app/Blured.temp_caseinsensitive_rename-tvOS";
 				TVOS_DEPLOYMENT_TARGET = 10.1;
 			};
 			name = Release;

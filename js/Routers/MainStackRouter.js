@@ -13,11 +13,11 @@ import { NavigationEvents, createStackNavigator, NavigationActions } from "react
 
 export default (StackNav = createStackNavigator({
 		  Login: { screen: Login },
-		  Intro: { screen: Intro},
-		  Settings: { screen: Settings},
 		  Swipes: { screen: Swipes},
 		  Messages: { screen: Messages},	 
-		  Chat: { screen: Chat},	  
+		  Chat: { screen: Chat},
+		  Intro: { screen: Intro},	
+		  Settings: { screen: Settings},  
 		},
 		{
 			mode: 'card',

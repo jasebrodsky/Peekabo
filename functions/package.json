@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "firebase-admin": "~6.0.0",
-    "firebase-functions": "^2.1.0"
+    "firebase-functions": "^2.1.0",
+    "mixin-deep": "^2.0.1"
   },
-  "engines": { "node": "8" },
+  "engines": {
+    "node": "8"
+  },
   "private": true
 }

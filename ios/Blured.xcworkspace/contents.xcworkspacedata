@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Blured.xcodeproj">
+      location = "group:/Users/jbrod/Documents/Blured-10-14-18-2-2/ios/Blured.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">
