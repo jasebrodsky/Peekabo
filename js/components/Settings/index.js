@@ -644,9 +644,12 @@ class Settings extends Component {
       type: payload
     });
 
+
+    console.log('type: '+JSON.stringify(type) +'payload length is: '+JSON.stringify(payload.length.toString()));
+
     //record in analytics the updated user property 
-    RNfirebase.analytics().setUserProperty(type, payload);
-   
+    RNfirebase.analytics().setUserProperty(type, payload.length.toString());
+                                                  
     //create ref to list of coversations for userid
     const userConversations = firebase.database().ref('users/'+userid+'/conversations/');
 
@@ -966,7 +969,7 @@ class Settings extends Component {
                 <Label>Work</Label>
                 <Input 
                   value={this.state.profile.work}
-                  placeholder='I work at ...'
+                  placeholder='I spend my time on ...'
                   onChangeText={(newwork) => this.setState({
                                 profile: { ...this.state.profile, work: newwork}
                               })}                  
@@ -994,7 +997,7 @@ class Settings extends Component {
                 <Input 
                   style={{minHeight: 50, height: '100%', maxHeight: 150}}
                   multiline={true}
-                  placeholder='I am great because ...'
+                  placeholder='I am unique because ...'
                   onContentSizeChange={(e) => console.log('updated size')}
                   value={this.state.profile.about}
                   onChangeText={(about) => this.setState({
