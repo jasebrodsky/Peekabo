@@ -689,9 +689,9 @@ class Swipes extends Component {
                       <Left>
                         <Body>
                           <Text style={{fontWeight: "bold"}} >{this.calculateAge(item.birthday)}, {item.gender}, {item.city_state}</Text>
-                          <Text style={{marginBottom: 4}} note>{item.education} </Text>
+                          <Text>{item.education} </Text>
                           <Text style={{marginBottom: 4}} note>{item.work} </Text>
-                          <Text numberOfLines={2} note>{item.about} </Text>
+                          <Text numberOfLines={1} note>{item.about} </Text>
                         </Body>
                       </Left>
                     </CardItem>
