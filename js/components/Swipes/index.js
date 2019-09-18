@@ -219,6 +219,8 @@ class Swipes extends Component {
     //create ref to conversations obj
     conversationRef = firebase.database().ref('conversations/');
 
+
+
     //push new conversation obj for new match
     //make sure that users who already matched, don't show up in match queue. Otherwise duplicate conversations will occur.  
     var newConversationRef = conversationRef.push({
@@ -419,10 +421,11 @@ class Swipes extends Component {
       });
     }
 
-    //record in analytics that user was successfully viewed a profile
-    RNfirebase.analytics().logEvent('profileViewSwipes', {
+    // let Analytics = RNFirebase.analytics();
+    RNFirebase.analytics().logEvent('profileViewSwipes', {
       testParam: 'testParamValue1'
     });
+
 }
 
   //handle swipe events
@@ -578,7 +581,7 @@ class Swipes extends Component {
               this.swiper = swiper
             }}
             verticalSwipe = {false}
-            onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchBirthday: this.state.profiles[cardIndex].birthday, matchWork: this.state.profiles[cardIndex].work, matchGender: this.state.profiles[cardIndex].gender, matchCityState: this.state.profiles[cardIndex].city_state, matchEducation: this.state.profiles[cardIndex].education,  matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
+            onTapCard={() => this.setState({ imageViewerVisible: true, matchAbout: this.state.profiles[cardIndex].about, matchEducation: this.state.profiles[cardIndex].education, matchBirthday: this.state.profiles[cardIndex].birthday, matchWork: this.state.profiles[cardIndex].work, matchGender: this.state.profiles[cardIndex].gender, matchCityState: this.state.profiles[cardIndex].city_state, matchEducation: this.state.profiles[cardIndex].education,  matchImages: Object.values(this.state.profiles[cardIndex].images) })} 
             cardIndex={this.state.cardIndex}
             backgroundColor={'#4FD0E9'}
             stackSeparation={12}
@@ -686,6 +689,7 @@ class Swipes extends Component {
                       <Left>
                         <Body>
                           <Text style={{fontWeight: "bold"}} >{this.calculateAge(item.birthday)}, {item.gender}, {item.city_state}</Text>
+                          <Text style={{marginBottom: 4}} note>{item.education} </Text>
                           <Text style={{marginBottom: 4}} note>{item.work} </Text>
                           <Text numberOfLines={2} note>{item.about} </Text>
                         </Body>
@@ -743,6 +747,7 @@ class Swipes extends Component {
 
                           <Text style={{fontWeight: "bold"}} >{this.calculateAge(this.state.matchBirthday)}, {this.state.matchGender}, {this.state.matchCityState}</Text>
                           <Text style={{marginBottom: 4}} note>{this.state.matchWork} </Text>
+                          <Text style={{marginBottom: 4}} note>{this.state.matchEducation} </Text>
                           <Text numberOfLines={2} note>{this.state.matchAbout} </Text>
 
                         </View>
