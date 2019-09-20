@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
 const slidesFemale = [
   {
     key: '1',
-    title: 'Welcome to Helm',
+    title: 'Welcome to Focus',
     text: 'Dating for the modern people.',
     image: require('./assets/banner-welcome.jpg'),
     imageStyle: styles.image,
@@ -76,7 +76,7 @@ const slidesFemale = [
 const slidesMale = [
   {
     key: '1',
-    title: 'Welcome to Helm',
+    title: 'Welcome to Focus',
     text: 'Dating for the modern people.',
     image: require('./assets/banner-welcome.jpg'),
     //image: {uri: 'https://edmullen.net/test/rc.jpg', cache: 'force-cache'},
@@ -166,7 +166,7 @@ class Intro extends Component {
 
         //prompt native share functionality 
         Share.share({
-          message: 'You gotta check out Helm. It\'s a dating app where only men invited by women can join. You\'ll need this code to enter: '+code,
+          message: 'You gotta check out Focus. It\'s a dating app where only men invited by women can join. You\'ll need this code to enter: '+code,
           url: 'https://helmdating.com/invited.html',
           title: 'Wow, have you seen this yet?'
         }).then(({action, activityType}) => {
@@ -251,7 +251,7 @@ class Intro extends Component {
             
             //alert welcome message, then navigate to settings. 
             AlertIOS.alert(
-              'Welcome to Helm!',
+              'Welcome to Focus!',
               'Click ok to enter community.',
               [
                 {
@@ -278,7 +278,7 @@ class Intro extends Component {
           const { navigate } = this.props.navigation;
 
           AlertIOS.alert(
-              'Welcome to Helm!',
+              'Welcome to Focus!',
               'actually check code before launching.',
               [
                 {
